@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Talking Dog: Deluxe Shop Edition</title>
+    <title>Cute Talking Puppy: Deluxe Edition</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700&display=swap');
 
@@ -166,9 +166,9 @@
 
     <!-- START SCREEN -->
     <div id="start-screen">
-        <h1 style="font-family:'Fredoka One'; font-size:36px; color:#ffeaa7; margin-bottom:5px;">TALKING DOG</h1>
-        <p style="font-size:18px; color:#bdc3c7;">Deluxe Edition</p>
-        <button class="start-btn" id="start-btn">PLAY NOW</button>
+        <h1 style="font-family:'Fredoka One'; font-size:36px; color:#ffeaa7; margin-bottom:5px;">TALKING PUPPY</h1>
+        <p style="font-size:18px; color:#bdc3c7;">Cute Voice Edition</p>
+        <button class="start-btn" id="start-btn">START</button>
     </div>
 </div>
 
@@ -181,7 +181,7 @@
         { id: 'skin_brown', type: 'skin', name: 'Classic Brown', price: 0, color: '#8d6e63', icon: '🐕' },
         { id: 'skin_black', type: 'skin', name: 'Midnight', price: 100, color: '#2d3436', icon: '🐈‍⬛' },
         { id: 'skin_gold', type: 'skin', name: 'Golden Retriever', price: 250, color: '#f1c40f', icon: '🦮' },
-        { id: 'skin_pink', type: 'skin', name: 'Candy Floss', price: 500, color: '#fd79a8', icon: '🐩' },
+        { id: 'skin_white', type: 'skin', name: 'Cloud White', price: 500, color: '#ffffff', icon: '🐩' },
         // Hats
         { id: 'hat_none', type: 'hat', name: 'No Hat', price: 0, icon: '🚫' },
         { id: 'hat_cap', type: 'hat', name: 'Red Cap', price: 150, icon: '🧢' },
@@ -190,7 +190,7 @@
     ];
 
     /* =========================================
-       2. AUDIO ENGINE
+       2. AUDIO ENGINE (CUTE VERSION)
        ========================================= */
     class AudioSys {
         constructor() { this.ctx = null; }
@@ -198,6 +198,8 @@
             if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
             if (this.ctx.state === 'suspended') await this.ctx.resume();
         }
+        
+        // Play simple tones (beeps/boops)
         playTone(freq, type='sine') {
             if(!this.ctx) return;
             const o = this.ctx.createOscillator();
@@ -207,11 +209,17 @@
             o.connect(g); g.connect(this.ctx.destination);
             o.start(); o.stop(this.ctx.currentTime + 0.2);
         }
+
+        // Play recorded voice (PITCH SHIFTED)
         playVoice(buffer) {
             if(!this.ctx) return;
             const src = this.ctx.createBufferSource();
             src.buffer = buffer;
-            src.playbackRate.value = 0.85; 
+            
+            // --- CHANGE: CUTE VOICE SETTING ---
+            // 1.0 = Normal, 0.8 = Deep, 1.4 = Cute/Chipmunk
+            src.playbackRate.value = 1.4; 
+            
             src.connect(this.ctx.destination);
             src.start();
             return src;
@@ -222,19 +230,14 @@
        3. SHOP SYSTEM
        ========================================= */
     const shop = {
-        inventory: ['skin_brown', 'hat_none'], // IDs of owned items
+        inventory: ['skin_brown', 'hat_none'],
         equipped: { skin: '#8d6e63', hat: 'hat_none' },
-        
-        init() {
-            this.render();
-        },
-        
+        init() { this.render(); },
         toggle() {
             const modal = document.getElementById('shop-modal');
             modal.classList.toggle('open');
             if(modal.classList.contains('open')) this.render();
         },
-
         buy(itemId) {
             const item = SHOP_DATA.find(i => i.id === itemId);
             if(this.inventory.includes(itemId)) {
@@ -244,22 +247,20 @@
                     game.coins -= item.price;
                     this.inventory.push(itemId);
                     game.updateUI();
-                    audio.playTone(600, 'square'); // Buy sound
+                    audio.playTone(800, 'sine'); // High pitch "Cha-ching!"
                     this.equip(item);
                     this.render();
                 } else {
-                    audio.playTone(150, 'sawtooth'); // Error sound
+                    audio.playTone(200, 'sawtooth'); // Low pitch Error
                     alert("Not enough coins!");
                 }
             }
         },
-
         equip(item) {
             if(item.type === 'skin') this.equipped.skin = item.color;
             if(item.type === 'hat') this.equipped.hat = item.id;
             this.render();
         },
-
         render() {
             const grid = document.getElementById('shop-items');
             grid.innerHTML = '';
@@ -310,7 +311,7 @@
         stats: { hunger: 80, clean: 80, energy: 80 },
         anim: { state: 'idle', timer: 0 },
         particles: [],
-        floater: [], // Floating text (coins)
+        floater: [], 
         ball: null,
         frame: 0,
         mouse: { x: 0, y: 0 },
@@ -327,7 +328,7 @@
                 this.stats.clean = 100;
                 this.anim.state = 'happy'; this.anim.timer = 60;
                 this.addCoins(15, '✨');
-                audio.playTone(400, 'sine');
+                audio.playTone(600, 'sine');
             }
             this.updateUI();
         },
@@ -384,13 +385,13 @@
         if(y < cy) { 
             game.anim.state = 'happy'; game.anim.timer = 30; 
             game.spawnPart(x, y, '❤️'); 
-            audio.playTone(600, 'sine');
+            audio.playTone(800, 'sine'); // Higher tone for petting
         } else {
             game.spawnPart(x, y, '✋');
         }
     });
 
-    // Mic
+    // Mic Recording
     const micBtn = document.getElementById('mic-btn');
     let mediaRecorder, chunks = [];
     const startRec = async (e) => {
@@ -480,7 +481,6 @@
         
         // Ears
         ctx.fillStyle = shop.equipped.skin; 
-        // Darken ears slightly logic omitted for simplicity, using same color
         ctx.beginPath(); ctx.moveTo(-50, -30); ctx.bezierCurveTo(-90, -10, -80, 60, -50, 40); ctx.fill();
         ctx.beginPath(); ctx.moveTo(50, -30); ctx.bezierCurveTo(90, -10, 80, 60, 50, 40); ctx.fill();
 
