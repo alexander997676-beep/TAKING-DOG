@@ -3,153 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Talking Dog: Ultimate Edition</title>
+    <title>Talking Dog: Deluxe Shop Edition</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700&display=swap');
 
+        /* --- GLOBAL RESET --- */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
-            margin: 0;
-            background: #2d3436;
-            font-family: 'Nunito', sans-serif;
-            overflow: hidden; /* Prevent scrolling */
-            touch-action: none; /* Prevent zoom/scroll on mobile */
+            margin: 0; background: #2d3436; font-family: 'Nunito', sans-serif;
+            overflow: hidden; touch-action: none;
         }
 
-        /* FLEX LAYOUT: Ensures buttons never get hidden */
+        /* --- MAIN LAYOUT --- */
         #app {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            display: flex;
-            flex-direction: column;
-            background: #fff;
-        }
-
-        /* 1. HEADER (Stats) */
-        #header {
-            height: 80px;
-            padding: 10px 20px;
-            background: rgba(255,255,255,0.9);
-            display: flex;
-            gap: 15px;
-            z-index: 10;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-        }
-
-        .stat-box {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        .stat-label { font-size: 12px; color: #636e72; font-weight: bold; margin-bottom: 5px; }
-        
-        .progress-bar {
-            height: 12px;
-            background: #dfe6e9;
-            border-radius: 6px;
-            overflow: hidden;
-            border: 1px solid rgba(0,0,0,0.1);
-        }
-        
-        .progress-fill { height: 100%; transition: width 0.5s ease-out; }
-
-        /* 2. GAME STAGE (Canvas grows to fill space) */
-        #canvas-container {
-            flex-grow: 1;
-            position: relative;
-            overflow: hidden;
-            cursor: crosshair;
-        }
-        
-        canvas { display: block; width: 100%; height: 100%; }
-
-        /* Side Menu (Rooms) */
-        #room-nav {
-            position: absolute;
-            right: 15px;
-            top: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        
-        .room-btn {
-            width: 45px; height: 45px;
-            border-radius: 50%;
-            border: 2px solid #fff;
-            background: rgba(0,0,0,0.2);
-            color: white;
-            font-size: 20px;
-            cursor: pointer;
-            backdrop-filter: blur(4px);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
-        }
-        .room-btn:active { transform: scale(0.9); }
-
-        /* 3. FOOTER (Controls) */
-        #footer {
-            height: 90px;
-            min-height: 90px;
-            background: #fff;
-            display: flex;
-            justify-content: space-evenly;
-            align-items: center;
-            border-radius: 25px 25px 0 0;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
-            z-index: 20;
-            padding-bottom: env(safe-area-inset-bottom, 10px);
-        }
-
-        .action-btn {
-            width: 55px; height: 55px;
-            border-radius: 18px;
-            border: none;
-            background: #f1f2f6;
-            font-size: 26px;
-            cursor: pointer;
-            box-shadow: 0 4px 0 #bdc3c7;
-            transition: all 0.1s;
-        }
-        .action-btn:active { transform: translateY(4px); box-shadow: none; }
-
-        /* Big Mic Button */
-        #mic-btn {
-            width: 75px; height: 75px;
-            border-radius: 50%;
-            background: #ff7675;
-            color: white;
-            font-size: 32px;
-            display: flex; justify-content: center; align-items: center;
-            margin-top: -40px; /* Float up */
-            border: 4px solid #fff;
-            box-shadow: 0 8px 0 #d63031, 0 10px 20px rgba(0,0,0,0.2);
-            cursor: pointer;
-        }
-        #mic-btn.recording {
-            background: #ff0000;
-            animation: pulse 1s infinite;
-        }
-
-        /* Overlay */
-        #start-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(45, 52, 54, 0.95);
-            display: flex; flex-direction: column;
-            justify-content: center; align-items: center;
-            z-index: 100; color: white;
-            text-align: center;
+            display: flex; flex-direction: column; background: #fff;
+        }
+
+        /* --- HEADER (Stats & Coins) --- */
+        #header {
+            height: 85px; padding: 10px 15px; background: rgba(255,255,255,0.95);
+            display: flex; align-items: center; gap: 10px; z-index: 10;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
         
-        .play-btn {
-            margin-top: 20px; padding: 15px 40px;
-            background: #00b894; color: white;
-            font-size: 22px; font-weight: bold; border: none;
-            border-radius: 50px; cursor: pointer;
-            box-shadow: 0 6px 0 #008f72;
+        .stats-group { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+        .stat-row { display: flex; align-items: center; gap: 8px; }
+        .stat-icon { font-size: 14px; width: 20px; }
+        .bar-bg { flex: 1; height: 10px; background: #dfe6e9; border-radius: 5px; overflow: hidden; }
+        .bar-fill { height: 100%; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        /* Coin Display */
+        #coin-display {
+            background: #ffeaa7; color: #d35400; padding: 8px 15px;
+            border-radius: 20px; font-weight: 800; font-size: 18px;
+            display: flex; align-items: center; gap: 5px;
+            border: 2px solid #fdcb6e; box-shadow: 0 4px 0 #fdcb6e;
         }
-        .play-btn:active { transform: translateY(6px); box-shadow: none; }
+
+        /* --- GAME AREA --- */
+        #canvas-wrapper { flex-grow: 1; position: relative; overflow: hidden; }
+        canvas { width: 100%; height: 100%; display: block; }
+
+        /* --- FOOTER (Actions) --- */
+        #footer {
+            height: 95px; background: white;
+            display: flex; justify-content: space-evenly; align-items: center;
+            border-radius: 30px 30px 0 0; box-shadow: 0 -5px 30px rgba(0,0,0,0.05);
+            padding-bottom: env(safe-area-inset-bottom, 10px); z-index: 20;
+        }
+
+        .btn {
+            width: 55px; height: 55px; border-radius: 18px; border: none;
+            background: #f1f2f6; font-size: 26px; cursor: pointer;
+            box-shadow: 0 4px 0 #bdc3c7; transition: transform 0.1s;
+            position: relative;
+        }
+        .btn:active { transform: translateY(4px); box-shadow: none; }
+        
+        /* Special Buttons */
+        #mic-btn {
+            width: 75px; height: 75px; border-radius: 50%; background: #ff7675;
+            color: white; font-size: 32px; margin-top: -35px;
+            box-shadow: 0 6px 0 #d63031, 0 10px 20px rgba(255, 118, 117, 0.4);
+        }
+        #mic-btn.recording { animation: pulse 1s infinite; background: #ff3f34; }
+        #shop-btn { background: #a29bfe; color: white; box-shadow: 0 4px 0 #6c5ce7; }
+
+        /* --- SHOP MODAL --- */
+        #shop-modal {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #f5f6fa; z-index: 50; display: none;
+            flex-direction: column; padding: 20px;
+        }
+        #shop-modal.open { display: flex; }
+        
+        .shop-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .shop-title { font-family: 'Fredoka One'; font-size: 28px; color: #2d3436; margin: 0; }
+        .close-btn { background: #ff7675; color: white; border: none; padding: 8px 15px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+
+        .shop-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;
+            overflow-y: auto; padding-bottom: 20px;
+        }
+        
+        .shop-item {
+            background: white; border-radius: 15px; padding: 15px;
+            text-align: center; border: 2px solid #dfe6e9;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .shop-item.owned { border-color: #55efc4; background: #f0fff4; }
+        .shop-item.equipped { border-color: #00b894; box-shadow: 0 0 0 4px rgba(0, 184, 148, 0.2); }
+        
+        .item-icon { font-size: 30px; margin-bottom: 5px; }
+        .item-name { font-weight: bold; font-size: 14px; color: #2d3436; margin-bottom: 5px; }
+        .item-price { font-size: 12px; color: #d35400; font-weight: bold; background: #ffeaa7; padding: 2px 8px; border-radius: 10px; display: inline-block;}
+
+        /* --- START OVERLAY --- */
+        #start-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(45, 52, 54, 0.95); z-index: 100;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: white; text-align: center;
+        }
+        .start-btn {
+            background: #00b894; color: white; border: none; padding: 15px 40px;
+            font-size: 22px; border-radius: 50px; font-weight: bold; margin-top: 20px;
+            box-shadow: 0 5px 0 #008f72; cursor: pointer;
+        }
 
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
     </style>
@@ -157,75 +118,100 @@
 <body>
 
 <div id="app">
-    <!-- Header: Stats -->
+    <!-- UI HEADER -->
     <div id="header">
-        <div class="stat-box">
-            <div class="stat-label">🍗 HUNGER</div>
-            <div class="progress-bar"><div class="progress-fill" id="fill-hunger" style="background:#fdcb6e; width:80%"></div></div>
+        <div class="stats-group">
+            <div class="stat-row">
+                <span class="stat-icon">🍗</span>
+                <div class="bar-bg"><div class="bar-fill" id="bar-hunger" style="background:#fdcb6e; width:80%"></div></div>
+            </div>
+            <div class="stat-row">
+                <span class="stat-icon">🚿</span>
+                <div class="bar-bg"><div class="bar-fill" id="bar-clean" style="background:#74b9ff; width:60%"></div></div>
+            </div>
+            <div class="stat-row">
+                <span class="stat-icon">⚡</span>
+                <div class="bar-bg"><div class="bar-fill" id="bar-energy" style="background:#55efc4; width:90%"></div></div>
+            </div>
         </div>
-        <div class="stat-box">
-            <div class="stat-label">🚿 CLEAN</div>
-            <div class="progress-bar"><div class="progress-fill" id="fill-clean" style="background:#74b9ff; width:60%"></div></div>
-        </div>
-        <div class="stat-box">
-            <div class="stat-label">⚡ ENERGY</div>
-            <div class="progress-bar"><div class="progress-fill" id="fill-energy" style="background:#55efc4; width:90%"></div></div>
-        </div>
-    </div>
-
-    <!-- Main Game Area -->
-    <div id="canvas-container">
-        <canvas id="gameCanvas"></canvas>
-        
-        <div id="room-nav">
-            <button class="room-btn" onclick="game.changeRoom('living')">🏠</button>
-            <button class="room-btn" onclick="game.changeRoom('kitchen')">🍳</button>
-            <button class="room-btn" onclick="game.changeRoom('bath')">🛁</button>
-            <button class="room-btn" onclick="game.changeRoom('bed')">🌙</button>
+        <div id="coin-display">
+            <span>🪙</span><span id="coin-count">100</span>
         </div>
     </div>
 
-    <!-- Footer: Controls -->
+    <!-- CANVAS WRAPPER -->
+    <div id="canvas-wrapper">
+        <canvas id="stage"></canvas>
+    </div>
+
+    <!-- FOOTER CONTROLS -->
     <div id="footer">
-        <button class="action-btn" onclick="game.interact('feed')">🍖</button>
-        <button class="action-btn" onclick="game.interact('shower')">🧼</button>
-        <div id="mic-btn">🎙️</div>
-        <button class="action-btn" onclick="game.spawnBall()">🎾</button>
-        <button class="action-btn" onclick="game.interact('sleep')">💤</button>
+        <button class="btn" onclick="game.action('feed')">🥩</button>
+        <button class="btn" onclick="game.action('clean')">🚿</button>
+        <button class="btn" id="mic-btn">🎙️</button>
+        <button class="btn" onclick="game.spawnBall()">🎾</button>
+        <button class="btn" id="shop-btn" onclick="shop.toggle()">🛍️</button>
     </div>
-</div>
 
-<!-- Start Screen -->
-<div id="start-overlay">
-    <h1 style="font-family:'Fredoka One'; font-size:40px; color:#ffeaa7;">TALKING DOG<br>ULTIMATE</h1>
-    <p>With Physics & Eye Tracking</p>
-    <button class="play-btn" id="start-btn">TAP TO START</button>
+    <!-- SHOP MODAL -->
+    <div id="shop-modal">
+        <div class="shop-header">
+            <h2 class="shop-title">Pet Shop</h2>
+            <button class="close-btn" onclick="shop.toggle()">Close</button>
+        </div>
+        <div class="shop-grid" id="shop-items">
+            <!-- Items injected by JS -->
+        </div>
+    </div>
+
+    <!-- START SCREEN -->
+    <div id="start-screen">
+        <h1 style="font-family:'Fredoka One'; font-size:36px; color:#ffeaa7; margin-bottom:5px;">TALKING DOG</h1>
+        <p style="font-size:18px; color:#bdc3c7;">Deluxe Edition</p>
+        <button class="start-btn" id="start-btn">PLAY NOW</button>
+    </div>
 </div>
 
 <script>
     /* =========================================
-       1. AUDIO ENGINE (Voice Changer)
+       1. DATA & CONFIG
        ========================================= */
-    class AudioSystem {
+    const SHOP_DATA = [
+        // Skins
+        { id: 'skin_brown', type: 'skin', name: 'Classic Brown', price: 0, color: '#8d6e63', icon: '🐕' },
+        { id: 'skin_black', type: 'skin', name: 'Midnight', price: 100, color: '#2d3436', icon: '🐈‍⬛' },
+        { id: 'skin_gold', type: 'skin', name: 'Golden Retriever', price: 250, color: '#f1c40f', icon: '🦮' },
+        { id: 'skin_pink', type: 'skin', name: 'Candy Floss', price: 500, color: '#fd79a8', icon: '🐩' },
+        // Hats
+        { id: 'hat_none', type: 'hat', name: 'No Hat', price: 0, icon: '🚫' },
+        { id: 'hat_cap', type: 'hat', name: 'Red Cap', price: 150, icon: '🧢' },
+        { id: 'hat_top', type: 'hat', name: 'Gentleman', price: 300, icon: '🎩' },
+        { id: 'hat_glasses', type: 'hat', name: 'Cool Shades', price: 200, icon: '🕶️' }
+    ];
+
+    /* =========================================
+       2. AUDIO ENGINE
+       ========================================= */
+    class AudioSys {
         constructor() { this.ctx = null; }
         async init() {
             if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
             if (this.ctx.state === 'suspended') await this.ctx.resume();
         }
-        playSfx(freq, type='sine', len=0.2) {
+        playTone(freq, type='sine') {
             if(!this.ctx) return;
-            const osc = this.ctx.createOscillator();
-            const gain = this.ctx.createGain();
-            osc.type = type; osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + len);
-            osc.connect(gain); gain.connect(this.ctx.destination);
-            osc.start(); osc.stop(this.ctx.currentTime + len);
+            const o = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            o.type = type; o.frequency.setValueAtTime(freq, this.ctx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+            o.connect(g); g.connect(this.ctx.destination);
+            o.start(); o.stop(this.ctx.currentTime + 0.2);
         }
         playVoice(buffer) {
             if(!this.ctx) return;
             const src = this.ctx.createBufferSource();
             src.buffer = buffer;
-            src.playbackRate.value = 0.85; // Deep dog voice
+            src.playbackRate.value = 0.85; 
             src.connect(this.ctx.destination);
             src.start();
             return src;
@@ -233,325 +219,332 @@
     }
 
     /* =========================================
-       2. GAME ENGINE
+       3. SHOP SYSTEM
        ========================================= */
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const audio = new AudioSystem();
-
-    // Physics Ball Class
-    class Ball {
-        constructor(x, y) {
-            this.x = x; this.y = y;
-            this.vx = (Math.random() - 0.5) * 20;
-            this.vy = -15; // Throw up
-            this.radius = 15;
-            this.gravity = 0.8;
-            this.bounce = 0.7;
-            this.active = true;
-        }
-        update(floorY, width) {
-            this.vy += this.gravity;
-            this.x += this.vx;
-            this.y += this.vy;
-
-            // Floor Collision
-            if(this.y + this.radius > floorY) {
-                this.y = floorY - this.radius;
-                this.vy *= -this.bounce;
-                this.vx *= 0.95; // Friction
-                if(Math.abs(this.vy) < 1) this.active = false;
-            }
-            // Wall Collision
-            if(this.x < 0 || this.x > width) {
-                this.vx *= -1;
-                this.x = Math.max(this.radius, Math.min(width - this.radius, this.x));
-            }
-        }
-        draw(ctx) {
-            ctx.fillStyle = '#badc58'; // Tennis ball green
-            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2); ctx.fill();
-            ctx.strokeStyle = 'white'; ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2); ctx.stroke();
-        }
-    }
-
-    const game = {
-        room: 'living',
-        frame: 0,
-        talking: false,
-        stats: { hunger: 80, clean: 80, energy: 80 },
-        particles: [],
-        ball: null, // The physics ball
-        animState: 'idle',
-        animTimer: 0,
-        mouse: { x: 0, y: 0 }, // For eye tracking
-
-        changeRoom(r) { this.room = r; this.animState = 'idle'; audio.playSfx(400, 'square'); },
+    const shop = {
+        inventory: ['skin_brown', 'hat_none'], // IDs of owned items
+        equipped: { skin: '#8d6e63', hat: 'hat_none' },
         
-        spawnBall() {
-            this.changeRoom('living');
-            this.ball = new Ball(canvas.width/2, canvas.height/2);
-            this.animState = 'chase';
-            this.stats.energy -= 10;
+        init() {
+            this.render();
+        },
+        
+        toggle() {
+            const modal = document.getElementById('shop-modal');
+            modal.classList.toggle('open');
+            if(modal.classList.contains('open')) this.render();
         },
 
-        interact(type) {
-            if(type === 'feed') {
-                this.changeRoom('kitchen'); this.animState = 'eat'; this.animTimer = 60;
-                this.stats.hunger = Math.min(100, this.stats.hunger + 30);
-                this.spawnParticles(canvas.width/2, canvas.height/2 - 50, '🦴');
+        buy(itemId) {
+            const item = SHOP_DATA.find(i => i.id === itemId);
+            if(this.inventory.includes(itemId)) {
+                this.equip(item);
+            } else {
+                if(game.coins >= item.price) {
+                    game.coins -= item.price;
+                    this.inventory.push(itemId);
+                    game.updateUI();
+                    audio.playTone(600, 'square'); // Buy sound
+                    this.equip(item);
+                    this.render();
+                } else {
+                    audio.playTone(150, 'sawtooth'); // Error sound
+                    alert("Not enough coins!");
+                }
             }
-            if(type === 'shower') {
-                this.changeRoom('bath'); this.animState = 'shower'; this.animTimer = 100;
-                this.stats.clean = 100;
-                audio.playSfx(200, 'sawtooth');
-            }
-            if(type === 'sleep') {
-                this.changeRoom('bed'); 
-                this.animState = this.animState === 'sleep' ? 'idle' : 'sleep';
-            }
-            updateUI();
         },
 
-        spawnParticles(x, y, char) {
-            for(let i=0; i<8; i++) this.particles.push({x,y, char, vx:(Math.random()-0.5)*10, vy:(Math.random()-1)*10, life:1});
+        equip(item) {
+            if(item.type === 'skin') this.equipped.skin = item.color;
+            if(item.type === 'hat') this.equipped.hat = item.id;
+            this.render();
+        },
+
+        render() {
+            const grid = document.getElementById('shop-items');
+            grid.innerHTML = '';
+            SHOP_DATA.forEach(item => {
+                const owned = this.inventory.includes(item.id);
+                const isEquipped = (item.type === 'skin' && this.equipped.skin === item.color) || 
+                                   (item.type === 'hat' && this.equipped.hat === item.id);
+                
+                const div = document.createElement('div');
+                div.className = `shop-item ${owned ? 'owned' : ''} ${isEquipped ? 'equipped' : ''}`;
+                div.onclick = () => this.buy(item.id);
+                div.innerHTML = `
+                    <div class="item-icon">${item.icon}</div>
+                    <div class="item-name">${item.name}</div>
+                    <div class="item-price">${owned ? (isEquipped ? 'Equipped' : 'Equip') : '🪙 ' + item.price}</div>
+                `;
+                grid.appendChild(div);
+            });
         }
     };
 
     /* =========================================
-       3. INPUT HANDLING (Touch/Mouse/Mic)
+       4. GAME ENGINE
        ========================================= */
-    const micBtn = document.getElementById('mic-btn');
-    let mediaRecorder, chunks = [];
+    const canvas = document.getElementById('stage');
+    const ctx = canvas.getContext('2d');
+    const audio = new AudioSys();
 
-    // Eye Tracking Input
-    window.addEventListener('pointermove', (e) => {
-        const rect = canvas.getBoundingClientRect();
-        game.mouse.x = e.clientX - rect.left;
-        game.mouse.y = e.clientY - rect.top;
+    class Ball {
+        constructor(x, y) {
+            this.x = x; this.y = y; this.vx = (Math.random()-0.5)*15; this.vy = -15;
+            this.active = true;
+        }
+        update(floor) {
+            this.vy += 0.8; this.x += this.vx; this.y += this.vy;
+            if(this.y > floor-15) { this.y = floor-15; this.vy *= -0.7; this.vx *= 0.95; }
+            if(this.x < 0 || this.x > canvas.width) this.vx *= -1;
+            if(Math.abs(this.vy) < 1 && this.y > floor-20) this.active = false;
+        }
+        draw() {
+            ctx.fillStyle = '#badc58'; ctx.beginPath(); ctx.arc(this.x, this.y, 15, 0, Math.PI*2); ctx.fill();
+            ctx.strokeStyle='white'; ctx.lineWidth=2; ctx.stroke();
+        }
+    }
+
+    const game = {
+        coins: 100,
+        stats: { hunger: 80, clean: 80, energy: 80 },
+        anim: { state: 'idle', timer: 0 },
+        particles: [],
+        floater: [], // Floating text (coins)
+        ball: null,
+        frame: 0,
+        mouse: { x: 0, y: 0 },
+        talking: false,
+
+        action(type) {
+            if(type === 'feed') {
+                this.stats.hunger = Math.min(100, this.stats.hunger + 30);
+                this.anim.state = 'eat'; this.anim.timer = 60;
+                this.addCoins(10, '🍗');
+                this.spawnPart(canvas.width/2, canvas.height/2, '🦴');
+            }
+            if(type === 'clean') {
+                this.stats.clean = 100;
+                this.anim.state = 'happy'; this.anim.timer = 60;
+                this.addCoins(15, '✨');
+                audio.playTone(400, 'sine');
+            }
+            this.updateUI();
+        },
+        
+        spawnBall() {
+            if(this.stats.energy > 10) {
+                this.ball = new Ball(canvas.width/2, canvas.height/2);
+                this.stats.energy -= 10;
+                this.addCoins(5, '🎾');
+                this.updateUI();
+            }
+        },
+
+        addCoins(amount, icon) {
+            this.coins += amount;
+            this.floater.push({ x: canvas.width/2, y: canvas.height/2 - 50, text: `+${amount}`, life: 1 });
+            this.updateUI();
+        },
+
+        spawnPart(x, y, char) {
+            for(let i=0; i<6; i++) this.particles.push({x, y, char, vx:(Math.random()-0.5)*10, vy:(Math.random()-1)*10, life:1});
+        },
+
+        updateUI() {
+            document.getElementById('bar-hunger').style.width = this.stats.hunger + '%';
+            document.getElementById('bar-clean').style.width = this.stats.clean + '%';
+            document.getElementById('bar-energy').style.width = this.stats.energy + '%';
+            document.getElementById('coin-count').innerText = this.coins;
+        }
+    };
+
+    /* =========================================
+       5. INPUTS & RENDERING
+       ========================================= */
+    function resize() {
+        canvas.width = document.getElementById('canvas-wrapper').offsetWidth;
+        canvas.height = document.getElementById('canvas-wrapper').offsetHeight;
+    }
+    window.addEventListener('resize', resize);
+    window.addEventListener('pointermove', e => {
+        const r = canvas.getBoundingClientRect();
+        game.mouse.x = e.clientX - r.left; game.mouse.y = e.clientY - r.top;
     });
 
-    // Mic Logic
+    // Touch Interaction
+    canvas.addEventListener('pointerdown', e => {
+        const r = canvas.getBoundingClientRect();
+        const x = e.clientX - r.left; const y = e.clientY - r.top;
+        const cy = canvas.height/2;
+
+        if(game.ball) { game.ball.vy = -20; game.ball.vx = (Math.random()-0.5)*20; return; }
+
+        audio.init();
+        if(y < cy) { 
+            game.anim.state = 'happy'; game.anim.timer = 30; 
+            game.spawnPart(x, y, '❤️'); 
+            audio.playTone(600, 'sine');
+        } else {
+            game.spawnPart(x, y, '✋');
+        }
+    });
+
+    // Mic
+    const micBtn = document.getElementById('mic-btn');
+    let mediaRecorder, chunks = [];
     const startRec = async (e) => {
-        if(e) e.preventDefault();
-        await audio.init();
+        if(e) e.preventDefault(); await audio.init();
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const stream = await navigator.mediaDevices.getUserMedia({audio:true});
             mediaRecorder = new MediaRecorder(stream);
-            chunks = [];
-            mediaRecorder.ondataavailable = e => chunks.push(e.data);
-            mediaRecorder.start();
-            micBtn.classList.add('recording');
-        } catch(e) { alert("Mic Permission Needed"); }
+            chunks=[]; mediaRecorder.ondataavailable=e=>chunks.push(e.data);
+            mediaRecorder.start(); micBtn.classList.add('recording');
+        } catch(e){ alert("Mic Access Needed"); }
     };
     const stopRec = (e) => {
         if(e) e.preventDefault();
-        if(!mediaRecorder || mediaRecorder.state === 'inactive') return;
-        mediaRecorder.stop();
-        micBtn.classList.remove('recording');
+        if(!mediaRecorder || mediaRecorder.state==='inactive') return;
+        mediaRecorder.stop(); micBtn.classList.remove('recording');
         mediaRecorder.onstop = async () => {
-            const blob = new Blob(chunks, { 'type' : 'audio/ogg; codecs=opus' });
+            const blob = new Blob(chunks, {'type':'audio/ogg; codecs=opus'});
             const buf = await audio.ctx.decodeAudioData(await blob.arrayBuffer());
             const src = audio.playVoice(buf);
             game.talking = true; src.onended = () => game.talking = false;
         };
     };
-
     micBtn.addEventListener('mousedown', startRec); micBtn.addEventListener('touchstart', startRec);
     micBtn.addEventListener('mouseup', stopRec); micBtn.addEventListener('touchend', stopRec);
 
-    // Petting Logic
-    canvas.addEventListener('pointerdown', (e) => {
-        const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const cy = canvas.height / 2 + 10;
-        
-        // Physics Ball Interaction
-        if(game.ball) {
-            game.ball.vy = -15; // Kick ball
-            game.ball.vx = (Math.random()-0.5)*20;
-            return;
-        }
-
-        // Dog Interaction
-        audio.init();
-        if (y < cy - 60) { game.spawnParticles(x, y, '❤️'); audio.playSfx(600, 'sine'); game.animState = 'happy'; game.animTimer = 40; } 
-        else if (y < cy + 80) { game.spawnParticles(x, y, '✨'); audio.playSfx(150, 'square'); }
-    });
-
-    /* =========================================
-       4. RENDER LOOP
-       ========================================= */
-    function resize() {
-        canvas.width = document.getElementById('canvas-container').offsetWidth;
-        canvas.height = document.getElementById('canvas-container').offsetHeight;
-    }
-    window.addEventListener('resize', resize);
-    
-    function updateUI() {
-        document.getElementById('fill-hunger').style.width = game.stats.hunger + '%';
-        document.getElementById('fill-clean').style.width = game.stats.clean + '%';
-        document.getElementById('fill-energy').style.width = game.stats.energy + '%';
-    }
-
+    /* --- DRAW LOOP --- */
     function loop() {
         game.frame++;
-        
-        // Stats decay
-        if(game.frame % 300 === 0 && game.animState !== 'sleep') {
-            game.stats.hunger = Math.max(0, game.stats.hunger - 2);
-            game.stats.clean = Math.max(0, game.stats.clean - 1);
-            game.stats.energy = Math.max(0, game.stats.energy - 1);
-            updateUI();
+        if(game.frame%300===0) {
+            game.stats.hunger = Math.max(0, game.stats.hunger-2);
+            game.stats.clean = Math.max(0, game.stats.clean-1);
+            game.stats.energy = Math.max(0, game.stats.energy-1);
+            game.updateUI();
         }
+        if(game.anim.timer > 0) { game.anim.timer--; if(game.anim.timer<=0) game.anim.state='idle'; }
 
-        // Anim Timer
-        if(game.animTimer > 0) { game.animTimer--; if(game.animTimer <= 0) game.animState = 'idle'; }
+        // Draw BG
+        let floorY = canvas.height * 0.7;
+        ctx.fillStyle = '#a8e6cf'; ctx.fillRect(0,0,canvas.width, canvas.height); // Wall
+        ctx.fillStyle = 'rgba(0,0,0,0.1)'; ctx.fillRect(0, floorY, canvas.width, canvas.height-floorY); // Floor
 
-        draw();
+        // Draw Ball
+        if(game.ball) { game.ball.update(floorY + 80); game.ball.draw(); }
+
+        drawDog(floorY);
+
+        // Draw Particles
+        for(let i=game.particles.length-1; i>=0; i--) {
+            let p = game.particles[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=0.5; p.life-=0.05;
+            ctx.globalAlpha=p.life; ctx.font="24px Arial"; ctx.fillText(p.char, p.x, p.y);
+            ctx.globalAlpha=1; if(p.life<=0) game.particles.splice(i,1);
+        }
+        // Draw Floating Text
+        for(let i=game.floater.length-1; i>=0; i--) {
+            let f = game.floater[i]; f.y-=2; f.life-=0.02;
+            ctx.globalAlpha=f.life; ctx.fillStyle="#d35400"; ctx.font="bold 30px Arial"; 
+            ctx.fillText(f.text + "🪙", f.x, f.y);
+            ctx.globalAlpha=1; if(f.life<=0) game.floater.splice(i,1);
+        }
+        // Flies
+        if(game.stats.clean < 40) ctx.fillText("🪰", canvas.width/2 - 70, floorY-100);
+
         requestAnimationFrame(loop);
     }
 
-    function draw() {
-        // Dynamic Backgrounds
-        let bg = ctx.createLinearGradient(0, 0, 0, canvas.height);
-        if(game.room === 'living') { bg.addColorStop(0, '#81ecec'); bg.addColorStop(1, '#00cec9'); }
-        if(game.room === 'kitchen') { bg.addColorStop(0, '#ffeaa7'); bg.addColorStop(1, '#fab1a0'); }
-        if(game.room === 'bath') { bg.addColorStop(0, '#74b9ff'); bg.addColorStop(1, '#0984e3'); }
-        if(game.room === 'bed') { 
-             // Night Mode
-             bg.addColorStop(0, '#2d3436'); bg.addColorStop(1, '#636e72'); 
-        }
-        ctx.fillStyle = bg; ctx.fillRect(0,0,canvas.width, canvas.height);
-
-        // Stars for Bedroom
-        if(game.room === 'bed' || game.animState === 'sleep') {
-            ctx.fillStyle = 'white';
-            for(let i=0; i<20; i++) {
-                if((game.frame + i*10) % 100 > 50) 
-                    ctx.fillRect((i*93)%canvas.width, (i*41)%canvas.height/2, 2, 2);
-            }
-        }
-
-        // Floor (Adjusted for mobile)
-        const floorY = canvas.height * 0.65;
-        ctx.fillStyle = 'rgba(0,0,0,0.1)';
-        ctx.fillRect(0, floorY, canvas.width, canvas.height - floorY);
-
-        // Physics Ball Logic
-        if(game.ball) {
-            game.ball.update(floorY + 80, canvas.width); // +80 allows it to roll visually "in front"
-            game.ball.draw(ctx);
-        }
-
-        drawDog(floorY);
-        
-        // Particles
-        for(let i = game.particles.length-1; i>=0; i--) {
-            let p = game.particles[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=0.5; p.life-=0.02;
-            ctx.globalAlpha = p.life; ctx.font = "30px Arial"; ctx.fillText(p.char, p.x, p.y);
-            ctx.globalAlpha = 1; if(p.life<=0) game.particles.splice(i,1);
-        }
-        
-        // Flies Overlay
-        if(game.stats.clean < 50) {
-            ctx.font = "24px Arial"; 
-            let flyX = canvas.width/2 + Math.sin(game.frame*0.1)*60;
-            ctx.fillText("🪰", flyX, floorY - 100);
-        }
-    }
-
     function drawDog(floorY) {
-        const cx = canvas.width / 2;
-        const cy = floorY - 30; // Anchor dog to floor
-        
-        // Physics tweaks
-        let breath = Math.sin(game.frame * 0.08) * 3;
-        let bounce = (game.animState === 'jump') ? Math.abs(Math.sin(game.frame*0.2)*80) : 0;
+        const cx = canvas.width/2;
+        const cy = floorY - 20;
+        let breath = Math.sin(game.frame*0.08)*3;
         
         ctx.save();
-        ctx.translate(cx, cy - bounce);
+        ctx.translate(cx, cy);
 
         // Tail
-        ctx.beginPath(); ctx.strokeStyle = '#8d6e63'; ctx.lineWidth = 15; ctx.lineCap = 'round';
-        let tailSpeed = (game.animState === 'happy' || game.talking) ? 0.5 : 0.1;
-        let tailWag = Math.cos(game.frame * tailSpeed) * 35;
-        ctx.moveTo(45, 20); ctx.quadraticCurveTo(75, 0, 75 + tailWag, -40); ctx.stroke();
+        ctx.beginPath(); ctx.strokeStyle = shop.equipped.skin; ctx.lineWidth = 15; ctx.lineCap = 'round';
+        let wag = Math.cos(game.frame * (game.anim.state==='happy'?0.5:0.1)) * 30;
+        ctx.moveTo(40, 30); ctx.quadraticCurveTo(70, 10, 70+wag, -30); ctx.stroke();
 
         // Body
-        ctx.fillStyle = '#8d6e63'; 
-        ctx.beginPath(); ctx.ellipse(0, 0, 70, 80 + breath, 0, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = '#d7ccc8'; // Belly
-        ctx.beginPath(); ctx.ellipse(0, 10, 40, 50 + breath, 0, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = shop.equipped.skin;
+        ctx.beginPath(); ctx.ellipse(0, 40, 65, 75+breath, 0, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.4)'; // Belly Highlight
+        ctx.beginPath(); ctx.ellipse(0, 50, 35, 45+breath, 0, 0, Math.PI*2); ctx.fill();
 
-        // --- HEAD ---
-        ctx.translate(0, -90 + breath);
+        // HEAD GROUP
+        ctx.translate(0, -60+breath);
         
-        // Ears (Wiggle)
-        let earWiggle = (game.talking) ? Math.sin(game.frame*0.5)*5 : 0;
-        ctx.fillStyle = '#5d4037';
-        ctx.beginPath(); ctx.moveTo(-50, -30); ctx.bezierCurveTo(-100, -10, -90, 80+earWiggle, -50, 40); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(50, -30); ctx.bezierCurveTo(100, -10, 90, 80+earWiggle, 50, 40); ctx.fill();
+        // Ears
+        ctx.fillStyle = shop.equipped.skin; 
+        // Darken ears slightly logic omitted for simplicity, using same color
+        ctx.beginPath(); ctx.moveTo(-50, -30); ctx.bezierCurveTo(-90, -10, -80, 60, -50, 40); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(50, -30); ctx.bezierCurveTo(90, -10, 80, 60, 50, 40); ctx.fill();
 
-        // Head Shape
-        ctx.fillStyle = '#8d6e63'; ctx.beginPath(); ctx.arc(0, 0, 70, 0, Math.PI*2); ctx.fill();
-        
+        // Head Circle
+        ctx.beginPath(); ctx.arc(0, 0, 65, 0, Math.PI*2); ctx.fill();
+
         // Snout
-        ctx.fillStyle = '#efebe9'; ctx.beginPath(); ctx.ellipse(0, 25, 40, 32, 0, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = '#2d3436'; ctx.beginPath(); ctx.arc(0, 15, 14, 0, Math.PI*2); ctx.fill(); // Nose
+        ctx.fillStyle = '#f5f6fa'; ctx.beginPath(); ctx.ellipse(0, 20, 35, 28, 0, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#2d3436'; ctx.beginPath(); ctx.arc(0, 10, 12, 0, Math.PI*2); ctx.fill(); // Nose
+
+        // Eyes (Tracking)
+        let tx = game.ball ? game.ball.x : game.mouse.x;
+        let ty = game.ball ? game.ball.y : game.mouse.y;
+        let dx = (tx - cx)/20; let dy = (ty - (cy-60))/20;
+        dx = Math.max(-10, Math.min(10, dx));
         
-        // --- EYES (Tracking) ---
-        let eyeOpen = (game.animState === 'sleep') ? 1 : 14;
-        
-        // Calc Target (Ball or Mouse)
-        let targetX = game.ball ? game.ball.x : game.mouse.x;
-        let targetY = game.ball ? game.ball.y : game.mouse.y;
-        
-        // Eye White
         ctx.fillStyle = 'white';
-        ctx.beginPath(); ctx.ellipse(-30, -20, 16, eyeOpen, 0, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.ellipse(30, -20, 16, eyeOpen, 0, 0, Math.PI*2); ctx.fill();
-
-        if(eyeOpen > 2) {
-            // Pupil Tracking Math
-            let dx = targetX - (cx); 
-            let dy = targetY - (cy - 90);
-            let angle = Math.atan2(dy, dx);
-            let dist = Math.min(6, Math.hypot(dx, dy) / 30); // Limit movement
-            
-            let pupX = Math.cos(angle) * dist;
-            let pupY = Math.sin(angle) * dist;
-
-            ctx.fillStyle = 'black';
-            ctx.beginPath(); ctx.arc(-30 + pupX, -20 + pupY, 7, 0, Math.PI*2); ctx.fill();
-            ctx.beginPath(); ctx.arc(30 + pupX, -20 + pupY, 7, 0, Math.PI*2); ctx.fill();
-        }
+        ctx.beginPath(); ctx.ellipse(-25, -20, 14, 14, 0, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(25, -20, 14, 14, 0, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = 'black';
+        ctx.beginPath(); ctx.arc(-25+dx, -20+dy, 6, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(25+dx, -20+dy, 6, 0, Math.PI*2); ctx.fill();
 
         // Mouth
-        ctx.fillStyle = '#e57373';
-        if(game.talking || game.animState === 'happy') {
-            ctx.beginPath(); ctx.arc(0, 40, 15, 0, Math.PI); ctx.fillStyle = '#2d3436'; ctx.fill();
-            ctx.fillStyle = '#ff7675'; ctx.beginPath(); ctx.ellipse(0, 52, 8, 10, 0, 0, Math.PI*2); ctx.fill(); // Tongue
+        ctx.fillStyle = '#ff7675';
+        if(game.talking || game.anim.state==='happy') {
+            ctx.beginPath(); ctx.arc(0, 30, 15, 0, Math.PI); ctx.fill();
         } else {
-            ctx.beginPath(); ctx.strokeStyle = '#2d3436'; ctx.lineWidth = 3;
-            ctx.moveTo(0, 40); ctx.lineTo(0, 50); 
-            ctx.moveTo(0, 50); ctx.quadraticCurveTo(-15, 50, -20, 40); 
-            ctx.moveTo(0, 50); ctx.quadraticCurveTo(15, 50, 20, 40); ctx.stroke();
+            ctx.beginPath(); ctx.strokeStyle='#2d3436'; ctx.lineWidth=3;
+            ctx.moveTo(0,35); ctx.lineTo(0,45); 
+            ctx.moveTo(0,45); ctx.quadraticCurveTo(-15,45,-20,35);
+            ctx.moveTo(0,45); ctx.quadraticCurveTo(15,45,20,35); ctx.stroke();
+        }
+
+        // --- HATS DRAWING ---
+        if(shop.equipped.hat === 'hat_cap') {
+            ctx.fillStyle = '#d63031';
+            ctx.beginPath(); ctx.arc(0, -50, 66, Math.PI, 0); ctx.fill(); // Dome
+            ctx.fillRect(-70, -50, 140, 10); // Brim
+        }
+        if(shop.equipped.hat === 'hat_top') {
+            ctx.fillStyle = '#2d3436';
+            ctx.fillRect(-40, -100, 80, 60); // Top
+            ctx.fillRect(-60, -40, 120, 10); // Brim
+            ctx.fillStyle = '#d63031'; ctx.fillRect(-40, -50, 80, 10); // Stripe
+        }
+        if(shop.equipped.hat === 'hat_glasses') {
+            ctx.fillStyle = 'rgba(0,0,0,0.8)';
+            ctx.fillRect(-50, -30, 45, 20); ctx.fillRect(5, -30, 45, 20);
+            ctx.strokeStyle = '#2d3436'; ctx.lineWidth=2;
+            ctx.beginPath(); ctx.moveTo(-5, -20); ctx.lineTo(5, -20); ctx.stroke();
         }
 
         // Collar
-        ctx.fillStyle = '#ff7675'; ctx.fillRect(-40, 60, 80, 12);
-        ctx.fillStyle = '#ffeaa7'; ctx.beginPath(); ctx.arc(0, 72, 8, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#d63031'; ctx.fillRect(-35, 55, 70, 10);
+        ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(0, 65, 6, 0, Math.PI*2); ctx.fill();
 
         ctx.restore();
     }
 
     // Init
     document.getElementById('start-btn').addEventListener('click', () => {
-        document.getElementById('start-overlay').style.display = 'none';
-        resize(); audio.init(); loop();
+        document.getElementById('start-screen').style.display = 'none';
+        shop.init(); resize(); audio.init(); loop();
     });
 
 </script>
