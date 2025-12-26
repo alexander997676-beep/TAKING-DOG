@@ -3,456 +3,757 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Talking Dog: Faizan Edition</title>
+    <title>Talking Dog: Ultimate Edition</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Varela+Round&display=swap');
 
         :root {
-            --primary: #ff6b6b;
-            --accent: #4ecdc4;
-            --dark: #2d3436;
-            --glass: rgba(255, 255, 255, 0.85);
+            --primary: #FF6B6B;
+            --secondary: #4ECDC4;
+            --accent: #FFE66D;
+            --dark: #2C3E50;
+            --ui-bg: rgba(255, 255, 255, 0.95);
         }
 
         body {
-            margin: 0; background: #2d3436; font-family: 'Nunito', sans-serif;
-            overflow: hidden; height: 100vh; touch-action: none;
+            margin: 0;
+            overflow: hidden;
+            background: #2C3E50;
+            font-family: 'Varela Round', sans-serif;
+            touch-action: none; /* Prevents pull-to-refresh on mobile */
+            user-select: none;
+            -webkit-user-select: none;
         }
 
-        #app {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(to bottom, #87CEEB, #E0F7FA);
-            display: flex; flex-direction: column;
+        #game-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, #4facfe 0%, #00f2fe 100%);
             transition: background 1s ease;
         }
-        #app.night { background: linear-gradient(to bottom, #2c3e50, #4ca1af); }
 
-        /* --- HUD --- */
-        #hud { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 20; }
-        .badge {
-            background: var(--glass); backdrop-filter: blur(10px);
-            padding: 8px 16px; border-radius: 30px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1); font-weight: 800; color: var(--dark);
-            display: flex; align-items: center; gap: 8px; border: 1px solid white;
+        canvas { display: block; width: 100%; height: 100%; }
+
+        /* UI OVERLAY */
+        #ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; /* Let clicks pass through to canvas */
+            display: flex; flex-direction: column; justify-content: space-between;
         }
 
-        /* --- STATS --- */
-        .bars-container {
-            position: absolute; top: 80px; left: 20px; right: 20px;
-            display: flex; gap: 10px; z-index: 10;
+        .hud-top {
+            padding: 15px;
+            display: flex; justify-content: space-between;
+            align-items: flex-start;
+            pointer-events: auto;
         }
-        .bar-wrap { flex: 1; height: 10px; background: rgba(0,0,0,0.1); border-radius: 5px; overflow: hidden; }
-        .bar-fill { height: 100%; border-radius: 5px; transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
 
-        /* --- STAGE --- */
-        #stage-container { flex-grow: 1; position: relative; cursor: grab; }
-        canvas { width: 100%; height: 100%; display: block; }
+        .stat-badge {
+            background: var(--ui-bg); padding: 8px 15px; border-radius: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            font-family: 'Fredoka One', cursive; color: var(--dark);
+            display: flex; align-items: center; gap: 8px; font-size: 18px;
+            border: 3px solid white;
+        }
 
-        /* --- CONTROLS --- */
-        #controls {
-            height: 120px; /* Thoda bada kiya taaki text aa sake */
-            background: rgba(255,255,255,0.9);
-            border-radius: 40px 40px 0 0;
-            display: flex; justify-content: space-evenly; align-items: flex-start;
-            padding-top: 20px;
-            padding-bottom: env(safe-area-inset-bottom, 20px);
-            box-shadow: 0 -10px 50px rgba(0,0,0,0.1);
-            z-index: 30;
+        .btn-icon {
+            width: 45px; height: 45px; border-radius: 50%; border: none;
+            background: white; font-size: 22px; cursor: pointer;
+            box-shadow: 0 4px 0 #bdc3c7; transition: transform 0.1s;
+            margin-left: 10px; pointer-events: auto;
+        }
+        .btn-icon:active { transform: translateY(4px); box-shadow: none; }
+
+        /* BARS */
+        .bars-wrapper {
+            position: absolute; top: 70px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 400px; display: flex; gap: 8px;
+            pointer-events: none;
+        }
+        .bar-pill {
+            flex: 1; height: 12px; background: rgba(0,0,0,0.3);
+            border-radius: 6px; overflow: hidden; border: 2px solid rgba(255,255,255,0.5);
+        }
+        .bar-fill { height: 100%; width: 100%; transition: width 0.5s ease; }
+
+        /* FOOTER CONTROLS */
+        .controls-area {
+            background: var(--ui-bg);
+            border-radius: 30px 30px 0 0;
+            padding: 20px 20px 30px 20px;
+            display: flex; justify-content: space-around; align-items: flex-end;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
+            pointer-events: auto;
             position: relative;
         }
 
-        .btn {
-            width: 55px; height: 55px; border: none; border-radius: 20px;
-            background: #f1f2f6; font-size: 26px; box-shadow: 0 5px 0 #dfe4ea;
-            transition: transform 0.1s; cursor: pointer;
+        .action-btn {
+            width: 60px; height: 60px; border-radius: 20px;
+            border: none; background: #f1f2f6; font-size: 28px;
+            box-shadow: 0 6px 0 #dcdde1; cursor: pointer;
+            transition: all 0.1s; position: relative;
         }
-        .btn:active { transform: translateY(5px); box-shadow: none; }
+        .action-btn:active { transform: translateY(6px); box-shadow: 0 0 0; }
+        .action-btn span { display: block; font-size: 10px; font-weight: bold; color: #7f8c8d; margin-top: -5px; }
+
+        #mic-trigger {
+            width: 85px; height: 85px; border-radius: 50%;
+            background: var(--primary); color: white;
+            font-size: 40px; border: 6px solid white;
+            margin-bottom: 15px;
+            box-shadow: 0 10px 20px rgba(255, 107, 107, 0.4);
+            display: flex; align-items: center; justify-content: center;
+            animation: float 3s ease-in-out infinite;
+        }
+        #mic-trigger.recording { background: #ff4757; animation: pulse 0.8s infinite; }
+
+        /* SHOP & MINIGAME OVERLAYS */
+        .overlay {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 80%;
+            background: white; border-radius: 40px 40px 0 0;
+            transform: translateY(110%); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 100; display: flex; flex-direction: column;
+            box-shadow: 0 -100px 0 rgba(0,0,0,0.5); /* Dim background */
+            pointer-events: auto;
+        }
+        .overlay.open { transform: translateY(0); }
+        .overlay-header { padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; }
+        .overlay-content { flex: 1; overflow-y: auto; padding: 20px; }
         
-        #mic-btn {
-            width: 80px; height: 80px; border-radius: 50%;
-            background: var(--primary); color: white; font-size: 34px; margin-top: -40px;
-            box-shadow: 0 8px 0 #c0392b; border: 5px solid white;
-            display: flex; justify-content: center; align-items: center;
-        }
-        #mic-btn.recording { animation: pulse 1s infinite; background: #ff4757; }
-
-        /* --- FOOTER CREDIT (DESIGNER NAME) --- */
-        #designer-credit {
-            position: absolute;
-            bottom: 5px;
-            width: 100%;
-            text-align: center;
-            font-size: 10px;
-            font-weight: 900;
-            color: #FFD700; /* GOLDEN COLOR */
-            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-            letter-spacing: 1px;
-            z-index: 40;
-            pointer-events: none;
-            font-family: 'Fredoka One', cursive;
-            padding-bottom: env(safe-area-inset-bottom, 2px);
-        }
-
-        /* --- SHOP --- */
-        #shop-overlay {
-            position: absolute; bottom: 0; left: 0; width: 100%; height: 75%;
-            background: #fdfdfd; border-radius: 40px 40px 0 0;
-            transform: translateY(110%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            z-index: 100; padding: 25px; box-sizing: border-box;
-            display: flex; flex-direction: column;
-            box-shadow: 0 -20px 60px rgba(0,0,0,0.2);
-        }
-        #shop-overlay.active { transform: translateY(0); }
-
-        .shop-section { margin-bottom: 15px; }
-        .section-title { font-size: 14px; color: #636e72; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; }
-        .shop-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        
-        .item-card {
-            background: #f1f2f6; border-radius: 15px; padding: 10px;
+        .shop-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .shop-item {
+            background: #f8f9fa; border-radius: 15px; padding: 15px 5px;
             text-align: center; border: 2px solid transparent; cursor: pointer;
-            font-size: 12px; font-weight: bold;
         }
-        .item-card img { font-size: 24px; display: block; margin: 0 auto 5px; }
-        .item-card.active { border-color: var(--accent); background: #e0fbf9; box-shadow: 0 4px 10px rgba(78, 205, 196, 0.2); }
+        .shop-item.active { border-color: var(--secondary); background: #e0fbfc; }
+
+        /* TOAST NOTIFICATION */
+        #toast {
+            position: absolute; top: 100px; left: 50%; transform: translateX(-50%) translateY(-20px);
+            background: #2d3436; color: white; padding: 10px 20px; border-radius: 50px;
+            font-weight: bold; opacity: 0; transition: 0.3s; pointer-events: none;
+        }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
     </style>
 </head>
 <body>
 
-<div id="app">
-    <!-- UI -->
-    <div id="hud">
-        <div class="badge">🪙 <span id="coin-txt">250</span></div>
-        <div class="badge" onclick="shop.toggle()" style="cursor: pointer;">🛍️ Store</div>
+<div id="game-layer">
+    <canvas id="cvs"></canvas>
+</div>
+
+<div id="ui-layer">
+    <!-- Top HUD -->
+    <div class="hud-top">
+        <div class="stat-badge">🪙 <span id="coin-display">100</span></div>
+        <div style="display:flex;">
+            <button class="btn-icon" onclick="game.startMinigame()">🎮</button>
+            <button class="btn-icon" onclick="shop.toggle()">👕</button>
+        </div>
     </div>
 
-    <div class="bars-container">
-        <div class="bar-wrap"><div class="bar-fill" id="bar-food" style="background:#ff9ff3; width:80%"></div></div>
-        <div class="bar-wrap"><div class="bar-fill" id="bar-wash" style="background:#54a0ff; width:60%"></div></div>
-        <div class="bar-wrap"><div class="bar-fill" id="bar-sleep" style="background:#00d2d3; width:90%"></div></div>
+    <!-- Bars -->
+    <div class="bars-wrapper">
+        <div class="bar-pill"><div class="bar-fill" id="fill-food" style="background:#ff9ff3;"></div></div>
+        <div class="bar-pill"><div class="bar-fill" id="fill-clean" style="background:#54a0ff;"></div></div>
+        <div class="bar-pill"><div class="bar-fill" id="fill-sleep" style="background:#00d2d3;"></div></div>
     </div>
 
-    <!-- Canvas -->
-    <div id="stage-container">
-        <canvas id="cvs"></canvas>
-    </div>
+    <!-- Toast -->
+    <div id="toast">Signal</div>
 
     <!-- Controls -->
-    <div id="controls">
-        <button class="btn" onclick="game.act('eat')">🍖</button>
-        <button class="btn" onclick="game.act('wash')">🧼</button>
-        <div id="mic-btn">🎙️</div>
-        <button class="btn" onclick="game.spawnBall()">🎾</button>
-        <button class="btn" onclick="game.toggleSleep()">💤</button>
+    <div class="controls-area" id="main-controls">
+        <button class="action-btn" onclick="game.interact('food')">🍗<br><span>EAT</span></button>
+        <button class="action-btn" onclick="game.interact('clean')">🧼<br><span>WASH</span></button>
         
-        <!-- DESIGNER CREDIT -->
-        <div id="designer-credit">DESIGNED BY MUHAMMAD FAIZAN AHMED</div>
-    </div>
-
-    <!-- Shop -->
-    <div id="shop-overlay">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-            <h2 style="margin:0; font-family:'Fredoka One'; color:#2d3436;">Pet Store</h2>
-            <button onclick="shop.toggle()" style="background:#ff7675; color:white; border:none; padding:8px 20px; border-radius:20px; font-weight:bold;">Close</button>
-        </div>
+        <div id="mic-trigger">🎙️</div>
         
-        <div style="overflow-y:auto; flex-grow:1; padding-bottom:20px;">
-            
-            <!-- SKINS SECTION -->
-            <div class="shop-section">
-                <div class="section-title">Fur Color (Skins)</div>
-                <div class="shop-grid" id="skin-list"></div>
-            </div>
-
-            <!-- ACCESSORIES SECTION -->
-            <div class="shop-section">
-                <div class="section-title">Accessories</div>
-                <div class="shop-grid" id="acc-list"></div>
-            </div>
-
-        </div>
+        <button class="action-btn" onclick="game.spawnToy()">🎾<br><span>PLAY</span></button>
+        <button class="action-btn" onclick="game.toggleSleep()">💤<br><span>SLEEP</span></button>
     </div>
+</div>
+
+<!-- SHOP OVERLAY -->
+<div class="overlay" id="shop-overlay">
+    <div class="overlay-header">
+        <h2 style="margin:0; font-family:'Fredoka One'">Wardrobe</h2>
+        <button class="btn-icon" onclick="shop.toggle()">✕</button>
+    </div>
+    <div class="overlay-content">
+        <div class="shop-grid" id="shop-grid"></div>
+    </div>
+</div>
+
+<!-- MINIGAME OVERLAY (Canvas takeover logic) -->
+<div id="minigame-ui" style="display:none; position:absolute; top:20px; width:100%; text-align:center; pointer-events:none;">
+    <h1 style="color:white; font-family:'Fredoka One'; text-shadow:2px 2px 0 #000;">CATCH THE BONES!</h1>
+    <h2 style="color:#FFE66D; font-family:'Fredoka One'; text-shadow:2px 2px 0 #000;">Score: <span id="mg-score">0</span></h2>
+    <button onclick="game.endMinigame()" style="pointer-events:auto; padding:10px 20px; border-radius:20px; border:none; background:#ff6b6b; color:white; font-weight:bold; margin-top:10px;">EXIT</button>
 </div>
 
 <script>
     /* =========================================
-       1. ENGINE
+       AUDIO ENGINE (Web Audio API)
+       Generates sounds synthetically to avoid external assets
        ========================================= */
-    const cvs = document.getElementById('cvs');
-    const ctx = cvs.getContext('2d');
-    let width, height, dpr;
-
-    function resize() {
-        width = document.getElementById('stage-container').offsetWidth;
-        height = document.getElementById('stage-container').offsetHeight;
-        dpr = window.devicePixelRatio || 1;
-        cvs.width = width * dpr; cvs.height = height * dpr;
-        ctx.scale(dpr, dpr);
-    }
-    window.addEventListener('resize', resize);
-    const lerp = (a, b, t) => a + (b - a) * t;
-
-    /* =========================================
-       2. GAME LOGIC
-       ========================================= */
-    const game = {
-        coins: 250,
-        stats: { food: 80, wash: 80, sleep: 80 },
-        isNight: false,
-        dog: {
-            scaleY: 1, eyeX: 0, eyeY: 0, blink: 0, anim: 'idle', timer: 0
-        },
-        particles: [], ball: null, input: { x:0, y:0, isDown:false },
-
-        act(type) {
-            if(type === 'eat') { this.stats.food=Math.min(100,this.stats.food+20); this.triggerAnim('happy'); this.spawnPart(width/2, height/2, '🍖'); audio.playTone(400); }
-            if(type === 'wash') { this.stats.wash=100; this.triggerAnim('happy'); this.spawnPart(width/2, height/2, '🫧'); audio.playTone(600); }
-            this.updateUI();
-        },
-        toggleSleep() { this.isNight = !this.isNight; this.dog.anim = this.isNight?'sleep':'idle'; document.getElementById('app').className = this.isNight?'night':''; },
-        spawnBall() { this.ball = { x: width/2, y: 0, vx: (Math.random()-0.5)*15, vy: 0, r: 25 }; },
-        triggerAnim(n) { this.dog.anim=n; this.dog.timer=50; this.dog.scaleY=0.8; },
-        spawnPart(x, y, char) { for(let i=0;i<8;i++) this.particles.push({x,y,char,vx:(Math.random()-0.5)*10,vy:(Math.random()-1)*10,life:1,size:30}); },
-        updateUI() {
-            document.getElementById('coin-txt').innerText = this.coins;
-            document.getElementById('bar-food').style.width = this.stats.food + '%';
-            document.getElementById('bar-wash').style.width = this.stats.wash + '%';
-            document.getElementById('bar-sleep').style.width = this.stats.sleep + '%';
-        }
-    };
-
-    /* =========================================
-       3. SHOP DATA & LOGIC
-       ========================================= */
-    const shop = {
-        skins: [
-            { id: 'brown', name: 'Classic', col: ['#D7CCC8', '#8D6E63'], icon: '🐕' },
-            { id: 'black', name: 'Midnight', col: ['#636e72', '#2d3436'], icon: '🐈‍⬛' },
-            { id: 'gold', name: 'Goldie', col: ['#ffeaa7', '#fdcb6e'], icon: '🏆' },
-            { id: 'white', name: 'Cloud', col: ['#f5f6fa', '#dcdde1'], icon: '🐩' },
-            { id: 'zombie', name: 'Zombie', col: ['#b8e994', '#78e08f'], icon: '🧟' },
-            { id: 'robot', name: 'Robo-Dog', col: ['#dfe6e9', '#b2bec3'], icon: '🤖' }
-        ],
-        accessories: [
-            { id: 'none', name: 'No Item', icon: '🚫' },
-            { id: 'shades', name: 'Shades', icon: '🕶️' },
-            { id: 'hat', name: 'Top Hat', icon: '🎩' },
-            { id: 'bow', name: 'Bow Tie', icon: '🎀' },
-            { id: 'crown', name: 'Crown', icon: '👑' }
-        ],
-        activeSkin: 0,
-        activeAcc: 0,
-
-        init() {
-            // Render Skins
-            const sList = document.getElementById('skin-list');
-            this.skins.forEach((s, i) => {
-                let div = document.createElement('div');
-                div.className = `item-card ${i===0?'active':''}`;
-                div.innerHTML = `<span style="font-size:20px">${s.icon}</span><br>${s.name}`;
-                div.onclick = () => { this.activeSkin = i; this.renderSelection(); };
-                sList.appendChild(div);
-            });
-
-            // Render Accessories
-            const aList = document.getElementById('acc-list');
-            this.accessories.forEach((a, i) => {
-                let div = document.createElement('div');
-                div.className = `item-card ${i===0?'active':''}`;
-                div.innerHTML = `<span style="font-size:20px">${a.icon}</span><br>${a.name}`;
-                div.onclick = () => { this.activeAcc = i; this.renderSelection(); };
-                aList.appendChild(div);
-            });
-        },
-        renderSelection() {
-            // Update UI highlight
-            let sCards = document.getElementById('skin-list').children;
-            for(let c of sCards) c.classList.remove('active');
-            sCards[this.activeSkin].classList.add('active');
-
-            let aCards = document.getElementById('acc-list').children;
-            for(let c of aCards) c.classList.remove('active');
-            aCards[this.activeAcc].classList.add('active');
-        },
-        toggle() { document.getElementById('shop-overlay').classList.toggle('active'); }
-    };
-
-    /* =========================================
-       4. AUDIO
-       ========================================= */
-    const audio = {
+    const SFX = {
         ctx: null,
-        init() { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
-        playTone(f) {
-            if(!this.ctx) return;
-            let o = this.ctx.createOscillator(), g = this.ctx.createGain();
-            o.frequency.value = f; g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime+0.2);
-            o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime+0.2);
+        init() {
+            window.AudioContext = window.AudioContext || window.webkitAudioContext;
+            this.ctx = new AudioContext();
         },
-        playVoice(buf) {
-            if(!this.ctx) return;
-            let src = this.ctx.createBufferSource();
-            src.buffer = buf; src.playbackRate.value = 1.35; 
-            src.connect(this.ctx.destination); src.start();
+        play(type) {
+            if (!this.ctx) this.init();
+            if (this.ctx.state === 'suspended') this.ctx.resume();
+            
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+
+            const now = this.ctx.currentTime;
+            
+            if (type === 'coin') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(1200, now);
+                osc.frequency.exponentialRampToValueAtTime(2000, now + 0.1);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now); osc.stop(now + 0.3);
+            } else if (type === 'pop') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(400, now);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now); osc.stop(now + 0.1);
+            } else if (type === 'bark') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.linearRampToValueAtTime(100, now + 0.15);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                osc.start(now); osc.stop(now + 0.15);
+            }
+        },
+        playVoice(buffer) {
+            if (!this.ctx) this.init();
+            const src = this.ctx.createBufferSource();
+            src.buffer = buffer;
+            src.playbackRate.value = 1.35; // Pitch shift up
+            src.connect(this.ctx.destination);
+            src.start();
             return src;
         }
     };
 
     /* =========================================
-       5. INPUTS
+       GAME ENGINE & STATE
        ========================================= */
-    window.onload = () => { resize(); shop.init(); audio.init(); loop(); };
+    const canvas = document.getElementById('cvs');
+    const ctx = canvas.getContext('2d');
+    let W, H;
 
-    const micBtn = document.getElementById('mic-btn');
-    let rec, chunks=[];
-    micBtn.onpointerdown = async (e) => {
-        e.preventDefault(); if(audio.ctx.state==='suspended') await audio.ctx.resume();
-        try { let s = await navigator.mediaDevices.getUserMedia({audio:true}); rec=new MediaRecorder(s); chunks=[]; rec.ondataavailable=e=>chunks.push(e.data); rec.start(); micBtn.classList.add('recording'); } catch(e){}
-    };
-    micBtn.onpointerup = (e) => {
-        e.preventDefault(); if(!rec) return; rec.stop(); micBtn.classList.remove('recording');
-        rec.onstop=async()=>{ let b=new Blob(chunks,{type:'audio/ogg;codecs=opus'}); let buf=await audio.ctx.decodeAudioData(await b.arrayBuffer()); let src=audio.playVoice(buf); game.triggerAnim('talk'); src.onended=()=>game.dog.anim='idle'; };
-    };
+    const game = {
+        state: 'IDLE', // IDLE, SLEEP, TALK, MINIGAME
+        coins: 150,
+        stats: { food: 80, clean: 60, sleep: 90 },
+        dog: {
+            x: 0, y: 0, 
+            scaleY: 1, scaleX: 1,
+            eyeX: 0, eyeY: 0,
+            blinkTimer: 0,
+            animTimer: 0,
+            emotion: 'neutral' // happy, neutral, sad
+        },
+        particles: [],
+        minigame: { items: [], score: 0, playerX: 0 },
+        toy: null,
+        
+        init() {
+            this.resize();
+            window.addEventListener('resize', () => this.resize());
+            this.loop();
+            setInterval(() => this.decayStats(), 5000);
+        },
 
-    document.getElementById('stage-container').onpointerdown = e => {
-        game.input.isDown = true; game.input.x = e.clientX; game.input.y = e.clientY;
-        if(game.ball) { game.ball.vy = -15; game.ball.vx = (Math.random()-0.5)*20; }
-        else if (e.clientY < height/2 + 50) { // Simple tap head
-             game.triggerAnim('happy'); game.spawnPart(e.clientX, e.clientY, '❤️'); audio.playTone(500);
+        resize() {
+            W = window.innerWidth; H = window.innerHeight;
+            canvas.width = W * window.devicePixelRatio;
+            canvas.height = H * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+            this.dog.x = W / 2;
+            this.dog.y = H * 0.65;
+        },
+
+        decayStats() {
+            if (this.state === 'MINIGAME') return;
+            if (this.state !== 'SLEEP') this.stats.sleep = Math.max(0, this.stats.sleep - 1);
+            this.stats.food = Math.max(0, this.stats.food - 1);
+            this.stats.clean = Math.max(0, this.stats.clean - 0.5);
+            this.updateUI();
+        },
+
+        interact(type) {
+            if (this.state === 'SLEEP' && type !== 'sleep') {
+                this.toast("Shhh! Dog is sleeping!");
+                return;
+            }
+
+            if (type === 'food') {
+                if (this.stats.food >= 100) return this.toast("Not hungry!");
+                this.stats.food = Math.min(100, this.stats.food + 25);
+                this.spawnParticles(this.dog.x, this.dog.y - 50, '🍗', 5);
+                this.animDog('eat');
+            } else if (type === 'clean') {
+                this.stats.clean = 100;
+                this.spawnParticles(this.dog.x, this.dog.y - 50, '🫧', 8);
+                this.animDog('happy');
+            }
+            SFX.play('pop');
+            this.updateUI();
+        },
+
+        toggleSleep() {
+            if (this.state === 'SLEEP') {
+                this.state = 'IDLE';
+                document.getElementById('game-layer').style.background = 'linear-gradient(to bottom, #4facfe 0%, #00f2fe 100%)';
+                this.animDog('happy');
+            } else {
+                this.state = 'SLEEP';
+                document.getElementById('game-layer').style.background = 'linear-gradient(to bottom, #0f2027, #203a43, #2c5364)';
+                this.animDog('sleep');
+            }
+            this.updateUI();
+        },
+
+        spawnToy() {
+            if(this.toy) return;
+            this.toy = { x: W/2, y: -50, vx: (Math.random()-0.5)*10, vy: 0, r: 25 };
+            this.animDog('happy');
+        },
+
+        spawnParticles(x, y, char, count) {
+            for(let i=0; i<count; i++) {
+                this.particles.push({
+                    x, y, char,
+                    vx: (Math.random()-0.5)*10,
+                    vy: (Math.random()-1)*15,
+                    life: 1.0
+                });
+            }
+        },
+
+        animDog(type) {
+            this.dog.scaleY = 0.8; // Squash
+            this.dog.scaleX = 1.2;
+            setTimeout(() => {
+                this.dog.scaleY = 1.1; // Stretch
+                this.dog.scaleX = 0.9; 
+            }, 100);
+            
+            if (type === 'happy') this.dog.emotion = 'happy';
+            if (type === 'eat') this.dog.emotion = 'happy';
+            
+            clearTimeout(this.animTimer);
+            this.animTimer = setTimeout(() => {
+                this.dog.emotion = 'neutral';
+                this.dog.scaleY = 1; this.dog.scaleX = 1;
+            }, 1000);
+        },
+
+        updateUI() {
+            document.getElementById('coin-display').innerText = this.coins;
+            document.getElementById('fill-food').style.width = this.stats.food + '%';
+            document.getElementById('fill-clean').style.width = this.stats.clean + '%';
+            document.getElementById('fill-sleep').style.width = this.stats.sleep + '%';
+            
+            // Color feedback
+            document.getElementById('fill-food').style.background = this.stats.food < 30 ? '#ff7675' : '#ff9ff3';
+        },
+
+        toast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg; t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2000);
+        },
+
+        // MINIGAME LOGIC
+        startMinigame() {
+            this.state = 'MINIGAME';
+            this.minigame.score = 0;
+            this.minigame.items = [];
+            this.minigame.playerX = W/2;
+            document.getElementById('main-controls').style.display = 'none';
+            document.getElementById('minigame-ui').style.display = 'block';
+            document.getElementById('mg-score').innerText = '0';
+        },
+        endMinigame() {
+            this.state = 'IDLE';
+            document.getElementById('main-controls').style.display = 'flex';
+            document.getElementById('minigame-ui').style.display = 'none';
+            this.coins += this.minigame.score;
+            this.updateUI();
+            this.toast(`Earned +${this.minigame.score} Coins!`);
+        },
+
+        loop() {
+            ctx.clearRect(0,0,W,H);
+            
+            if (this.state === 'MINIGAME') {
+                this.renderMinigame();
+            } else {
+                this.renderMainGame();
+            }
+            requestAnimationFrame(() => this.loop());
+        },
+
+        renderMainGame() {
+            // Environment (Clouds)
+            const time = Date.now() / 1000;
+            ctx.fillStyle = 'rgba(255,255,255,0.2)';
+            ctx.beginPath(); ctx.arc(W*0.2 + Math.sin(time/5)*50, H*0.2, 40, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(W*0.8 + Math.sin(time/8)*40, H*0.15, 60, 0, Math.PI*2); ctx.fill();
+
+            // Toy Physics
+            if(this.toy) {
+                this.toy.vy += 0.8; 
+                this.toy.x += this.toy.vx; 
+                this.toy.y += this.toy.vy;
+                
+                // Bounce floor
+                if(this.toy.y > H - 150) { 
+                    this.toy.y = H - 150; 
+                    this.toy.vy *= -0.6; 
+                    this.toy.vx *= 0.9; // Friction
+                }
+                // Bounce walls
+                if(this.toy.x < 0 || this.toy.x > W) this.toy.vx *= -1;
+
+                if(Math.abs(this.toy.vy) < 0.5 && Math.abs(this.toy.vx) < 0.5 && this.toy.y > H - 160) this.toy = null; // Remove stopped toy
+
+                if(this.toy) {
+                    ctx.save(); ctx.translate(this.toy.x, this.toy.y);
+                    ctx.fillStyle = '#badc58'; ctx.beginPath(); ctx.arc(0,0,25,0,Math.PI*2); ctx.fill();
+                    ctx.strokeStyle = 'white'; ctx.lineWidth=3; ctx.beginPath(); 
+                    ctx.arc(0,0,25,0,Math.PI*2); ctx.moveTo(-15,0); ctx.lineTo(15,0); ctx.stroke();
+                    ctx.restore();
+                }
+            }
+
+            // Dog Drawing
+            drawDog(W/2, this.dog.y, this.dog);
+
+            // Particles
+            for(let i=this.particles.length-1; i>=0; i--) {
+                let p = this.particles[i];
+                p.x += p.vx; p.y += p.vy; p.vy += 0.5; p.life -= 0.02;
+                ctx.globalAlpha = Math.max(0, p.life);
+                ctx.font = '30px Arial'; ctx.fillText(p.char, p.x, p.y);
+                ctx.globalAlpha = 1;
+                if(p.life <= 0) this.particles.splice(i, 1);
+            }
+        },
+
+        renderMinigame() {
+            // Player (Dog Head) follow mouse
+            this.minigame.playerX += (input.x - this.minigame.playerX) * 0.2;
+            
+            // Draw Player
+            ctx.save();
+            ctx.translate(this.minigame.playerX, H - 100);
+            drawHead(0, 0, 0.8, shop.skins[shop.selected].colors, false);
+            ctx.restore();
+
+            // Spawn Items
+            if (Math.random() < 0.03) {
+                this.minigame.items.push({
+                    x: Math.random() * W, y: -50,
+                    type: Math.random() > 0.3 ? 'bone' : 'bomb',
+                    speed: 5 + Math.random() * 5
+                });
+            }
+
+            // Update Items
+            for (let i = this.minigame.items.length - 1; i >= 0; i--) {
+                let item = this.minigame.items[i];
+                item.y += item.speed;
+                
+                // Render
+                ctx.font = '40px Arial';
+                ctx.fillText(item.type === 'bone' ? '🍖' : '💣', item.x - 20, item.y);
+
+                // Collision
+                let dx = item.x - this.minigame.playerX;
+                let dy = item.y - (H - 100);
+                let dist = Math.sqrt(dx*dx + dy*dy);
+
+                if (dist < 60) {
+                    if (item.type === 'bone') {
+                        this.minigame.score += 10;
+                        SFX.play('coin');
+                        this.spawnParticles(item.x, item.y, '✨', 3);
+                    } else {
+                        this.minigame.score = Math.max(0, this.minigame.score - 20);
+                        SFX.play('bark'); // Ouch sound substitute
+                        document.getElementById('game-layer').style.background = '#ff7675';
+                        setTimeout(()=>document.getElementById('game-layer').style.background = '#4facfe', 100);
+                    }
+                    this.minigame.items.splice(i, 1);
+                    document.getElementById('mg-score').innerText = this.minigame.score;
+                } else if (item.y > H) {
+                    this.minigame.items.splice(i, 1);
+                }
+            }
         }
     };
-    window.onpointermove = e => { game.input.x = e.clientX; game.input.y = e.clientY; };
-    window.onpointerup = () => game.input.isDown = false;
 
     /* =========================================
-       6. RENDER
+       INPUT & INTERACTIONS
        ========================================= */
-    function loop() {
-        ctx.clearRect(0,0,width,height);
+    const input = { x: W/2, y: H/2, isDown: false };
+    
+    // Mouse/Touch Tracking
+    const updateInput = (e) => {
+        const cx = e.touches ? e.touches[0].clientX : e.clientX;
+        const cy = e.touches ? e.touches[0].clientY : e.clientY;
+        input.x = cx; input.y = cy;
         
-        // Physics
-        game.dog.scaleY = lerp(game.dog.scaleY, 1, 0.1);
-        let tx = game.ball ? game.ball.x : game.input.x;
-        let ty = game.ball ? game.ball.y : game.input.y;
-        game.dog.eyeX = lerp(game.dog.eyeX, (tx - width/2)/15, 0.1);
-        game.dog.eyeY = lerp(game.dog.eyeY, (ty - height/2)/20, 0.1);
-
-        let cx = width/2; let cy = height * 0.65;
-        
-        // Shadow
-        ctx.fillStyle = 'rgba(0,0,0,0.15)';
-        ctx.beginPath(); ctx.ellipse(cx, cy + 90, 80 * game.dog.scaleY, 20, 0, 0, Math.PI*2); ctx.fill();
-
-        drawDog(cx, cy);
-
-        // Ball
-        if(game.ball) {
-            let b = game.ball; b.vy += 0.8; b.x += b.vx; b.y += b.vy;
-            if(b.y > height - 100) { b.y = height - 100; b.vy *= -0.7; }
-            if(b.x < 0 || b.x > width) b.vx *= -1;
-            ctx.save(); ctx.translate(b.x, b.y); ctx.fillStyle = '#badc58'; ctx.beginPath(); ctx.arc(0,0,b.r,0,Math.PI*2); ctx.fill(); ctx.strokeStyle='white'; ctx.stroke(); ctx.restore();
+        // Petting Logic
+        if (input.isDown && game.state === 'IDLE') {
+            const dx = cx - W/2;
+            const dy = cy - (game.dog.y - 100); // Head area
+            if (Math.sqrt(dx*dx + dy*dy) < 80) {
+                if (Math.random() > 0.9) {
+                    game.spawnParticles(cx, cy, '❤️', 1);
+                    game.dog.emotion = 'happy';
+                    game.dog.scaleY = 0.95; // Purr effect
+                }
+            }
         }
+    };
 
-        // Particles
-        for(let i=game.particles.length-1; i>=0; i--) {
-            let p = game.particles[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=0.5; p.life-=0.02;
-            ctx.globalAlpha=p.life; ctx.font=`${p.size}px Arial`; ctx.fillText(p.char, p.x, p.y);
-            ctx.globalAlpha=1; if(p.life<=0) game.particles.splice(i,1);
+    window.addEventListener('pointermove', updateInput);
+    window.addEventListener('pointerdown', (e) => {
+        input.isDown = true;
+        updateInput(e);
+        SFX.init(); // Init Audio Context
+    });
+    window.addEventListener('pointerup', () => {
+        input.isDown = false;
+        game.dog.scaleY = 1;
+    });
+
+    /* =========================================
+       MICROPHONE RECORDING
+       ========================================= */
+    const micBtn = document.getElementById('mic-trigger');
+    let mediaRecorder, chunks = [];
+
+    micBtn.addEventListener('mousedown', startRec);
+    micBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startRec(); });
+    
+    window.addEventListener('mouseup', stopRec);
+    window.addEventListener('touchend', stopRec);
+
+    async function startRec() {
+        if(game.state === 'SLEEP') return game.toast("Zzz...");
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            chunks = [];
+            mediaRecorder.ondataavailable = e => chunks.push(e.data);
+            mediaRecorder.start();
+            micBtn.classList.add('recording');
+            game.dog.emotion = 'happy';
+        } catch (err) {
+            console.error(err);
+            game.toast("Mic Access Denied");
         }
-
-        if(game.dog.timer>0) { game.dog.timer--; if(game.dog.timer<=0) game.dog.anim='idle'; }
-        requestAnimationFrame(loop);
     }
 
-    function drawDog(x, y) {
-        ctx.save(); ctx.translate(x, y);
-        ctx.scale(1/game.dog.scaleY, game.dog.scaleY);
-
-        let skin = shop.skins[shop.activeSkin].col;
-        let acc = shop.accessories[shop.activeAcc].id;
-        let breath = Math.sin(Date.now()/500)*3;
-        if(game.dog.anim === 'talk') breath = Math.sin(Date.now()/50)*5;
-
-        // Body
-        let grad = ctx.createLinearGradient(-50, -100, 50, 100);
-        grad.addColorStop(0, skin[0]); grad.addColorStop(1, skin[1]);
+    function stopRec() {
+        if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
+        mediaRecorder.stop();
+        micBtn.classList.remove('recording');
         
-        // Tail
-        ctx.strokeStyle = skin[1]; ctx.lineWidth = 15; ctx.lineCap = 'round';
-        let wag = (game.dog.anim==='happy'||game.dog.anim==='talk')?Math.sin(Date.now()/50)*30:0;
-        ctx.beginPath(); ctx.moveTo(40,40); ctx.quadraticCurveTo(70,20,70+wag,-20); ctx.stroke();
+        mediaRecorder.onstop = async () => {
+            const blob = new Blob(chunks, { 'type': 'audio/ogg; codecs=opus' });
+            const arrayBuffer = await blob.arrayBuffer();
+            const audioBuffer = await SFX.ctx.decodeAudioData(arrayBuffer);
+            
+            game.state = 'TALK';
+            const source = SFX.playVoice(audioBuffer);
+            source.onended = () => { game.state = 'IDLE'; };
+        };
+    }
 
-        ctx.fillStyle = grad; ctx.beginPath(); ctx.ellipse(0, 50, 65, 75+breath, 0, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.beginPath(); ctx.ellipse(0, 60, 40, 45+breath, 0, 0, Math.PI*2); ctx.fill();
+    /* =========================================
+       SHOP SYSTEM
+       ========================================= */
+    const shop = {
+        selected: 0,
+        skins: [
+            { name: 'Beagle', colors: ['#D7CCC8', '#8D6E63'], cost: 0 },
+            { name: 'Husky', colors: ['#ecf0f1', '#2c3e50'], cost: 50 },
+            { name: 'Pug', colors: ['#f1c40f', '#d35400'], cost: 100 },
+            { name: 'Alien', colors: ['#55efc4', '#00b894'], cost: 200 },
+            { name: 'Robot', colors: ['#bdc3c7', '#7f8c8d'], cost: 300 }
+        ],
+        toggle() {
+            const el = document.getElementById('shop-overlay');
+            el.classList.toggle('open');
+            this.renderShop();
+        },
+        renderShop() {
+            const grid = document.getElementById('shop-grid');
+            grid.innerHTML = '';
+            this.skins.forEach((skin, idx) => {
+                const div = document.createElement('div');
+                div.className = `shop-item ${idx === this.selected ? 'active' : ''}`;
+                div.innerHTML = `
+                    <div style="width:30px;height:30px;background:${skin.colors[1]};border-radius:50%;margin:0 auto;"></div>
+                    <div style="font-weight:bold;margin-top:5px;">${skin.name}</div>
+                    <div style="font-size:12px;color:#777;">${idx === 0 ? 'Free' : '🪙'+skin.cost}</div>
+                `;
+                div.onclick = () => {
+                    if (game.coins >= skin.cost || idx === 0 || idx === this.selected) { // Allow re-selecting bought? (Simplified logic here)
+                         // Real game would track 'owned' status. Assuming free for demo or simple deduction
+                        this.selected = idx;
+                        this.renderShop();
+                        SFX.play('pop');
+                    }
+                };
+                grid.appendChild(div);
+            });
+        }
+    };
 
-        // Head Group
-        ctx.translate(0, -60+breath);
+    /* =========================================
+       RENDERER (Canvas Art)
+       ========================================= */
+    function drawHead(x, y, scale, colors, isDirty) {
+        ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale);
         
         // Ears
-        ctx.fillStyle = skin[1];
-        ctx.beginPath(); ctx.moveTo(-50, -20); ctx.bezierCurveTo(-100, 0, -90, 80, -50, 50); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(50, -20); ctx.bezierCurveTo(100, 0, 90, 80, 50, 50); ctx.fill();
+        ctx.fillStyle = colors[1];
+        ctx.beginPath(); ctx.ellipse(-50, -10, 25, 50, -0.5, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(50, -10, 25, 50, 0.5, 0, Math.PI*2); ctx.fill();
 
-        // Face
-        ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(0, 0, 70, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(0, 25, 40, 32, 0, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = '#2d3436'; ctx.beginPath(); ctx.arc(0, 15, 12, 0, Math.PI*2); ctx.fill();
+        // Face Base
+        let grad = ctx.createLinearGradient(0, -60, 0, 60);
+        grad.addColorStop(0, colors[0]); grad.addColorStop(1, colors[1]);
+        ctx.fillStyle = grad;
+        ctx.beginPath(); ctx.arc(0, 0, 65, 0, Math.PI*2); ctx.fill();
+
+        // Snout
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.beginPath(); ctx.ellipse(0, 20, 35, 28, 0, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#2d3436';
+        ctx.beginPath(); ctx.ellipse(0, 15, 12, 10, 0, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.beginPath(); ctx.arc(-3, 12, 3, 0, Math.PI*2); ctx.fill(); // Nose Shine
 
         // Eyes
-        let blink = (Math.random()<0.01 || game.dog.anim==='sleep') ? 0 : 1;
-        ctx.fillStyle = 'white';
-        ctx.beginPath(); ctx.ellipse(-25, -15, 16, 18*blink, 0, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.ellipse(25, -15, 16, 18*blink, 0, 0, Math.PI*2); ctx.fill();
-        
-        if(blink) {
-            let px = Math.max(-8, Math.min(8, game.dog.eyeX));
-            let py = Math.max(-8, Math.min(8, game.dog.eyeY));
+        let blink = game.dog.blinkTimer > 0 || game.state === 'SLEEP';
+        if(game.state !== 'SLEEP' && Math.random() < 0.02) game.dog.blinkTimer = 10;
+        if(game.dog.blinkTimer > 0) game.dog.blinkTimer--;
+
+        if (blink) {
+            ctx.strokeStyle = '#2d3436'; ctx.lineWidth = 4;
+            ctx.beginPath(); ctx.moveTo(-35, -15); ctx.lineTo(-15, -15); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(35, -15); ctx.lineTo(15, -15); ctx.stroke();
+        } else {
+            ctx.fillStyle = 'white';
+            ctx.beginPath(); ctx.ellipse(-25, -15, 12, 16, 0, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(25, -15, 12, 16, 0, 0, Math.PI*2); ctx.fill();
+            
+            // Pupils (Track Input)
+            let lx = Math.max(-5, Math.min(5, (input.x - W/2)/20));
+            let ly = Math.max(-5, Math.min(5, (input.y - H*0.6)/20));
             ctx.fillStyle = '#2d3436';
-            ctx.beginPath(); ctx.arc(-25+px, -15+py, 7, 0, Math.PI*2); ctx.fill();
-            ctx.beginPath(); ctx.arc(25+px, -15+py, 7, 0, Math.PI*2); ctx.fill();
-        }
-
-        // ACCESSORIES RENDER
-        if(acc === 'shades') {
-            ctx.fillStyle = '#222'; ctx.fillRect(-50, -25, 45, 25); ctx.fillRect(5, -25, 45, 25);
-            ctx.strokeStyle = '#222'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(-5,-20); ctx.lineTo(5,-20); ctx.stroke();
-        }
-
-        if(acc === 'hat') {
-            ctx.fillStyle = '#2d3436'; ctx.fillRect(-45, -90, 90, 60); ctx.fillRect(-70, -30, 140, 10);
-            ctx.fillStyle = '#d63031'; ctx.fillRect(-45, -45, 90, 10);
-        }
-
-        if(acc === 'crown') {
-            ctx.fillStyle = '#f1c40f'; 
-            ctx.beginPath(); ctx.moveTo(-40, -50); ctx.lineTo(-20, -90); ctx.lineTo(0, -50); ctx.lineTo(20, -90); ctx.lineTo(40, -50); ctx.lineTo(40, -30); ctx.lineTo(-40, -30); ctx.fill();
+            ctx.beginPath(); ctx.arc(-25+lx, -15+ly, 6, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(25+lx, -15+ly, 6, 0, Math.PI*2); ctx.fill();
         }
 
         // Mouth
-        ctx.fillStyle = '#ff7675';
-        if(game.dog.anim==='talk'||game.dog.anim==='happy') {
-            ctx.beginPath(); ctx.arc(0, 40, 15, 0, Math.PI); ctx.fill();
+        if (game.state === 'TALK') {
+            let open = Math.sin(Date.now()/50)*10 + 10;
+            ctx.fillStyle = '#fab1a0';
+            ctx.beginPath(); ctx.arc(0, 40, open, 0, Math.PI); ctx.fill();
+        } else if (game.dog.emotion === 'happy') {
+            ctx.strokeStyle = '#2d3436'; ctx.lineWidth = 3; ctx.lineCap='round';
+            ctx.beginPath(); ctx.arc(0, 35, 15, 0, Math.PI); ctx.stroke();
         } else {
-            ctx.strokeStyle='#2d3436'; ctx.lineWidth=3;
-            ctx.beginPath(); ctx.moveTo(0,35); ctx.lineTo(0,45); ctx.moveTo(0,45); ctx.quadraticCurveTo(-15,45,-20,35); ctx.moveTo(0,45); ctx.quadraticCurveTo(15,45,20,35); ctx.stroke();
-        }
-
-        // Bow Tie (Neck)
-        if(acc === 'bow') {
-            ctx.fillStyle = '#e17055'; 
-            ctx.beginPath(); ctx.moveTo(0, 60); ctx.lineTo(-20, 50); ctx.lineTo(-20, 70); ctx.fill();
-            ctx.beginPath(); ctx.moveTo(0, 60); ctx.lineTo(20, 50); ctx.lineTo(20, 70); ctx.fill();
-            ctx.beginPath(); ctx.arc(0, 60, 5, 0, Math.PI*2); ctx.fill();
-        } else {
-            // Standard Collar
-            ctx.fillStyle = '#ff6b6b'; ctx.fillRect(-40, 55, 80, 12);
-            ctx.fillStyle = '#feca57'; ctx.beginPath(); ctx.arc(0, 65, 8, 0, Math.PI*2); ctx.fill();
+            ctx.strokeStyle = '#2d3436'; ctx.lineWidth = 3; ctx.lineCap='round';
+            ctx.beginPath(); ctx.moveTo(-10, 45); ctx.quadraticCurveTo(0, 40, 10, 45); ctx.stroke();
         }
 
         ctx.restore();
     }
+
+    function drawDog(x, y, dog) {
+        let colors = shop.skins[shop.selected].colors;
+        let breath = Math.sin(Date.now() / 800) * 3;
+        let isDirty = game.stats.clean < 50;
+        
+        // Physics Smoothing
+        dog.scaleX += (1 - dog.scaleX) * 0.1;
+        dog.scaleY += (1 - dog.scaleY) * 0.1;
+
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(dog.scaleX, dog.scaleY);
+
+        // Shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.2)';
+        ctx.beginPath(); ctx.ellipse(0, 95, 70, 15, 0, 0, Math.PI*2); ctx.fill();
+
+        // Tail
+        let wag = (dog.emotion === 'happy' || game.state === 'TALK') ? Math.sin(Date.now()/50)*35 : Math.sin(Date.now()/500)*5;
+        ctx.strokeStyle = colors[1]; ctx.lineWidth = 18; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(40, 50); ctx.quadraticCurveTo(70, 30, 75+wag, -10); ctx.stroke();
+
+        // Body
+        let grad = ctx.createLinearGradient(-40, 0, 40, 0);
+        grad.addColorStop(0, colors[0]); grad.addColorStop(1, colors[1]);
+        ctx.fillStyle = grad;
+        
+        ctx.beginPath(); 
+        // Pear shape body
+        ctx.moveTo(-40, 80); 
+        ctx.bezierCurveTo(-50, 80, -60, 20, -20, 0);
+        ctx.lineTo(20, 0);
+        ctx.bezierCurveTo(60, 20, 50, 80, 40, 80);
+        ctx.fill();
+
+        // Belly Patch
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.beginPath(); ctx.ellipse(0, 55, 25, 30+breath, 0, 0, Math.PI*2); ctx.fill();
+
+        // Mud Spots
+        if (isDirty) {
+            ctx.fillStyle = '#795548';
+            ctx.beginPath(); ctx.arc(-30, 60, 10, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(20, 40, 8, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(0, 70, 12, 0, Math.PI*2); ctx.fill();
+        }
+
+        // Collar
+        ctx.fillStyle = '#ff6b6b'; ctx.fillRect(-30, -5, 60, 10);
+        ctx.fillStyle = '#feca57'; ctx.beginPath(); ctx.arc(0, 5, 8, 0, Math.PI*2); ctx.fill(); // Tag
+
+        // Head Animation Bob
+        let headY = -60 + breath;
+        drawHead(0, headY, 1, colors, isDirty);
+
+        ctx.restore();
+    }
+
+    game.init();
+
 </script>
 </body>
 </html>
