@@ -3,224 +3,336 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Talking Dog: Fixed Buttons</title>
+    <title>Talking Dog: Ultimate Edition</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700&display=swap');
 
         body {
             margin: 0;
-            padding: 0;
-            background: #222;
+            background: #2d3436;
             font-family: 'Nunito', sans-serif;
-            overflow: hidden; /* Scroll band */
+            overflow: hidden; /* Prevent scrolling */
+            touch-action: none; /* Prevent zoom/scroll on mobile */
         }
 
-        /* --- MAIN CONTAINER (Fixes Screen Size) --- */
+        /* FLEX LAYOUT: Ensures buttons never get hidden */
         #app {
-            position: fixed; /* Screen par chipka rahega */
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%; /* Puri height lega */
-            background: #fff;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
             display: flex;
             flex-direction: column;
+            background: #fff;
+        }
+
+        /* 1. HEADER (Stats) */
+        #header {
+            height: 80px;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            gap: 15px;
+            z-index: 10;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        .stat-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .stat-label { font-size: 12px; color: #636e72; font-weight: bold; margin-bottom: 5px; }
+        
+        .progress-bar {
+            height: 12px;
+            background: #dfe6e9;
+            border-radius: 6px;
             overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.1);
         }
+        
+        .progress-fill { height: 100%; transition: width 0.5s ease-out; }
 
-        /* --- TOP STATS (HUD) --- */
-        #hud {
+        /* 2. GAME STAGE (Canvas grows to fill space) */
+        #canvas-container {
+            flex-grow: 1;
+            position: relative;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+        
+        canvas { display: block; width: 100%; height: 100%; }
+
+        /* Side Menu (Rooms) */
+        #room-nav {
             position: absolute;
-            top: 0; left: 0; width: 100%;
-            padding: 15px 15px 0 15px;
-            box-sizing: border-box;
-            display: flex; gap: 10px; z-index: 10;
-            pointer-events: none;
+            right: 15px;
+            top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .room-btn {
+            width: 45px; height: 45px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            background: rgba(0,0,0,0.2);
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .room-btn:active { transform: scale(0.9); }
+
+        /* 3. FOOTER (Controls) */
+        #footer {
+            height: 90px;
+            min-height: 90px;
+            background: #fff;
+            display: flex;
+            justify-content: space-evenly;
+            align-items: center;
+            border-radius: 25px 25px 0 0;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+            z-index: 20;
+            padding-bottom: env(safe-area-inset-bottom, 10px);
         }
 
-        .meter-container {
-            flex: 1; background: rgba(0,0,0,0.3); height: 12px;
-            border-radius: 10px; position: relative;
-            border: 2px solid rgba(255,255,255,0.8); margin-top: 15px;
+        .action-btn {
+            width: 55px; height: 55px;
+            border-radius: 18px;
+            border: none;
+            background: #f1f2f6;
+            font-size: 26px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #bdc3c7;
+            transition: all 0.1s;
         }
-        .meter-fill { height: 100%; border-radius: 8px; transition: width 0.5s; }
-        .icon-label {
-            position: absolute; top: -22px; left: 2px;
-            font-size: 13px; font-weight: bold; color: #444;
-            text-shadow: 1px 1px 0 rgba(255,255,255,0.8);
-        }
+        .action-btn:active { transform: translateY(4px); box-shadow: none; }
 
-        /* --- GAME CANVAS --- */
-        canvas {
-            flex-grow: 1; /* Bachi hui jagah lega */
-            width: 100%;
-            background: transparent;
+        /* Big Mic Button */
+        #mic-btn {
+            width: 75px; height: 75px;
+            border-radius: 50%;
+            background: #ff7675;
+            color: white;
+            font-size: 32px;
+            display: flex; justify-content: center; align-items: center;
+            margin-top: -40px; /* Float up */
+            border: 4px solid #fff;
+            box-shadow: 0 8px 0 #d63031, 0 10px 20px rgba(0,0,0,0.2);
             cursor: pointer;
         }
-
-        /* --- BOTTOM TOOLBAR (Buttons) --- */
-        #toolbar {
-            height: 80px; /* Thoda chhota kiya taaki fit ho */
-            min-height: 80px;
-            background: white;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            border-top: 4px solid #eee;
-            z-index: 20;
-            /* iPhone/Android Safe Area Fix */
-            padding-bottom: env(safe-area-inset-bottom, 20px); 
+        #mic-btn.recording {
+            background: #ff0000;
+            animation: pulse 1s infinite;
         }
 
-        .tool-btn {
-            width: 50px; height: 50px; border: none; border-radius: 15px;
-            background: #f1f2f6; font-size: 24px; cursor: pointer;
-            box-shadow: 0 4px 0 #dfe4ea; transition: transform 0.1s;
-        }
-        .tool-btn:active { transform: translateY(4px); box-shadow: none; }
-
-        /* MIC BUTTON (Center) */
-        #mic-btn {
-            width: 65px; height: 65px; border-radius: 50%;
-            background: #ff5252; color: white;
-            margin-top: -30px; /* Toolbar ke upar float karega */
-            box-shadow: 0 5px 0 #b71c1c;
-            display: flex; justify-content: center; align-items: center;
-            font-size: 28px; cursor: pointer;
-        }
-        #mic-btn.recording { animation: recordPulse 1s infinite; background: #ff0000; }
-
-        /* --- SIDE BUTTONS --- */
-        #room-switch {
-            position: absolute; right: 10px; top: 100px;
-            display: flex; flex-direction: column; gap: 12px; z-index: 15;
-        }
-        .room-btn {
-            width: 42px; height: 42px; border-radius: 50%;
-            border: 2px solid white; background: rgba(0,0,0,0.3);
-            color: white; cursor: pointer; font-size: 20px;
-        }
-
-        /* --- OVERLAY --- */
-        #overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); color: white;
+        /* Overlay */
+        #start-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(45, 52, 54, 0.95);
             display: flex; flex-direction: column;
-            align-items: center; justify-content: center; z-index: 100;
+            justify-content: center; align-items: center;
+            z-index: 100; color: white;
+            text-align: center;
         }
-        .start-btn {
-            margin-top: 30px; padding: 15px 50px; font-size: 22px;
-            background: #43a047; color: white; border: none;
+        
+        .play-btn {
+            margin-top: 20px; padding: 15px 40px;
+            background: #00b894; color: white;
+            font-size: 22px; font-weight: bold; border: none;
             border-radius: 50px; cursor: pointer;
+            box-shadow: 0 6px 0 #008f72;
         }
+        .play-btn:active { transform: translateY(6px); box-shadow: none; }
 
-        @keyframes recordPulse { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
     </style>
 </head>
 <body>
 
 <div id="app">
-    <!-- Stats -->
-    <div id="hud">
-        <div class="meter-container"><span class="icon-label">🍗 Food</span><div class="meter-fill" id="bar-hunger" style="background: #ffb74d; width: 80%;"></div></div>
-        <div class="meter-container"><span class="icon-label">🧼 Clean</span><div class="meter-fill" id="bar-clean" style="background: #4fc3f7; width: 60%;"></div></div>
-        <div class="meter-container"><span class="icon-label">⚡ Energy</span><div class="meter-fill" id="bar-energy" style="background: #aed581; width: 90%;"></div></div>
+    <!-- Header: Stats -->
+    <div id="header">
+        <div class="stat-box">
+            <div class="stat-label">🍗 HUNGER</div>
+            <div class="progress-bar"><div class="progress-fill" id="fill-hunger" style="background:#fdcb6e; width:80%"></div></div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">🚿 CLEAN</div>
+            <div class="progress-bar"><div class="progress-fill" id="fill-clean" style="background:#74b9ff; width:60%"></div></div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">⚡ ENERGY</div>
+            <div class="progress-bar"><div class="progress-fill" id="fill-energy" style="background:#55efc4; width:90%"></div></div>
+        </div>
     </div>
 
-    <!-- Right Side Buttons -->
-    <div id="room-switch">
-        <button class="room-btn" onclick="game.setRoom('living')">🏠</button>
-        <button class="room-btn" onclick="game.setRoom('kitchen')">🍖</button>
-        <button class="room-btn" onclick="game.setRoom('bath')">🚿</button>
-        <button class="room-btn" onclick="game.setRoom('bed')">🛌</button>
+    <!-- Main Game Area -->
+    <div id="canvas-container">
+        <canvas id="gameCanvas"></canvas>
+        
+        <div id="room-nav">
+            <button class="room-btn" onclick="game.changeRoom('living')">🏠</button>
+            <button class="room-btn" onclick="game.changeRoom('kitchen')">🍳</button>
+            <button class="room-btn" onclick="game.changeRoom('bath')">🛁</button>
+            <button class="room-btn" onclick="game.changeRoom('bed')">🌙</button>
+        </div>
     </div>
 
-    <!-- Main Game Canvas -->
-    <canvas id="stage"></canvas>
-
-    <!-- Bottom Buttons (Toolbar) -->
-    <div id="toolbar">
-        <button class="tool-btn" onclick="game.action('feed')">🥩</button>
-        <button class="tool-btn" onclick="game.action('shower')">🧼</button>
+    <!-- Footer: Controls -->
+    <div id="footer">
+        <button class="action-btn" onclick="game.interact('feed')">🍖</button>
+        <button class="action-btn" onclick="game.interact('shower')">🧼</button>
         <div id="mic-btn">🎙️</div>
-        <button class="tool-btn" onclick="game.action('ball')">🎾</button>
-        <button class="tool-btn" onclick="game.action('sleep')">💤</button>
-    </div>
-
-    <!-- Start Screen -->
-    <div id="overlay">
-        <h1 style="font-family:'Fredoka One'; font-size:40px; color:#ffca28; margin:0;">TALKING DOG</h1>
-        <p>Fixed Buttons Edition</p>
-        <button class="start-btn" id="init-btn">PLAY NOW</button>
+        <button class="action-btn" onclick="game.spawnBall()">🎾</button>
+        <button class="action-btn" onclick="game.interact('sleep')">💤</button>
     </div>
 </div>
 
+<!-- Start Screen -->
+<div id="start-overlay">
+    <h1 style="font-family:'Fredoka One'; font-size:40px; color:#ffeaa7;">TALKING DOG<br>ULTIMATE</h1>
+    <p>With Physics & Eye Tracking</p>
+    <button class="play-btn" id="start-btn">TAP TO START</button>
+</div>
+
 <script>
-    /* AUDIO SYSTEM */
-    class AudioEngine {
+    /* =========================================
+       1. AUDIO ENGINE (Voice Changer)
+       ========================================= */
+    class AudioSystem {
         constructor() { this.ctx = null; }
         async init() {
             if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
             if (this.ctx.state === 'suspended') await this.ctx.resume();
         }
-        playTone(freq, type = 'sine') {
+        playSfx(freq, type='sine', len=0.2) {
             if(!this.ctx) return;
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
             osc.type = type; osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
+            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + len);
             osc.connect(gain); gain.connect(this.ctx.destination);
-            osc.start(); osc.stop(this.ctx.currentTime + 0.3);
+            osc.start(); osc.stop(this.ctx.currentTime + len);
         }
-        playBuffer(buffer) {
+        playVoice(buffer) {
             if(!this.ctx) return;
-            const source = this.ctx.createBufferSource();
-            source.buffer = buffer;
-            source.playbackRate.value = 0.85; 
-            source.connect(this.ctx.destination);
-            source.start();
-            return source;
+            const src = this.ctx.createBufferSource();
+            src.buffer = buffer;
+            src.playbackRate.value = 0.85; // Deep dog voice
+            src.connect(this.ctx.destination);
+            src.start();
+            return src;
         }
     }
 
-    /* GAME SYSTEM */
-    const canvas = document.getElementById('stage');
+    /* =========================================
+       2. GAME ENGINE
+       ========================================= */
+    const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    const audio = new AudioEngine();
-    
-    // Resize Logic (Important for Canvas)
-    function resize() {
-        // Toolbar ki height subtract karke canvas ko fit karenge
-        const toolbarHeight = document.getElementById('toolbar').offsetHeight;
-        canvas.width = document.getElementById('app').offsetWidth;
-        canvas.height = document.getElementById('app').offsetHeight - toolbarHeight;
+    const audio = new AudioSystem();
+
+    // Physics Ball Class
+    class Ball {
+        constructor(x, y) {
+            this.x = x; this.y = y;
+            this.vx = (Math.random() - 0.5) * 20;
+            this.vy = -15; // Throw up
+            this.radius = 15;
+            this.gravity = 0.8;
+            this.bounce = 0.7;
+            this.active = true;
+        }
+        update(floorY, width) {
+            this.vy += this.gravity;
+            this.x += this.vx;
+            this.y += this.vy;
+
+            // Floor Collision
+            if(this.y + this.radius > floorY) {
+                this.y = floorY - this.radius;
+                this.vy *= -this.bounce;
+                this.vx *= 0.95; // Friction
+                if(Math.abs(this.vy) < 1) this.active = false;
+            }
+            // Wall Collision
+            if(this.x < 0 || this.x > width) {
+                this.vx *= -1;
+                this.x = Math.max(this.radius, Math.min(width - this.radius, this.x));
+            }
+        }
+        draw(ctx) {
+            ctx.fillStyle = '#badc58'; // Tennis ball green
+            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2); ctx.fill();
+            ctx.strokeStyle = 'white'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2); ctx.stroke();
+        }
     }
-    window.addEventListener('resize', resize);
-    // Initial Call (thoda wait karke taaki elements load ho jayein)
-    setTimeout(resize, 100);
 
     const game = {
-        room: 'living', frame: 0, talking: false,
+        room: 'living',
+        frame: 0,
+        talking: false,
         stats: { hunger: 80, clean: 80, energy: 80 },
-        particles: [], animState: 'idle', animTimer: 0,
+        particles: [],
+        ball: null, // The physics ball
+        animState: 'idle',
+        animTimer: 0,
+        mouse: { x: 0, y: 0 }, // For eye tracking
+
+        changeRoom(r) { this.room = r; this.animState = 'idle'; audio.playSfx(400, 'square'); },
         
-        setRoom(r) { this.room = r; this.animState = 'idle'; audio.playTone(400, 'square'); },
-        action(type) {
-            if(type === 'feed') { this.setRoom('kitchen'); this.animState = 'eat'; this.animTimer = 60; this.stats.hunger += 30; this.spawnParticles(canvas.width/2, canvas.height/2 - 50, '🦴'); }
-            if(type === 'shower') { this.setRoom('bath'); this.animState = 'shower'; this.animTimer = 100; this.stats.clean = 100; audio.playTone(200, 'sawtooth'); }
-            if(type === 'sleep') { this.setRoom('bed'); this.animState = this.animState === 'sleep' ? 'idle' : 'sleep'; }
-            if(type === 'ball') { this.setRoom('living'); this.animState = 'jump'; this.animTimer = 40; this.stats.energy -= 10; }
+        spawnBall() {
+            this.changeRoom('living');
+            this.ball = new Ball(canvas.width/2, canvas.height/2);
+            this.animState = 'chase';
+            this.stats.energy -= 10;
+        },
+
+        interact(type) {
+            if(type === 'feed') {
+                this.changeRoom('kitchen'); this.animState = 'eat'; this.animTimer = 60;
+                this.stats.hunger = Math.min(100, this.stats.hunger + 30);
+                this.spawnParticles(canvas.width/2, canvas.height/2 - 50, '🦴');
+            }
+            if(type === 'shower') {
+                this.changeRoom('bath'); this.animState = 'shower'; this.animTimer = 100;
+                this.stats.clean = 100;
+                audio.playSfx(200, 'sawtooth');
+            }
+            if(type === 'sleep') {
+                this.changeRoom('bed'); 
+                this.animState = this.animState === 'sleep' ? 'idle' : 'sleep';
+            }
             updateUI();
         },
+
         spawnParticles(x, y, char) {
-            for(let i=0; i<8; i++) this.particles.push({x, y, char, vx: (Math.random()-0.5)*10, vy: (Math.random()-1)*10, life: 1});
+            for(let i=0; i<8; i++) this.particles.push({x,y, char, vx:(Math.random()-0.5)*10, vy:(Math.random()-1)*10, life:1});
         }
     };
 
-    /* MIC & TOUCH INPUTS */
+    /* =========================================
+       3. INPUT HANDLING (Touch/Mouse/Mic)
+       ========================================= */
     const micBtn = document.getElementById('mic-btn');
     let mediaRecorder, chunks = [];
 
+    // Eye Tracking Input
+    window.addEventListener('pointermove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        game.mouse.x = e.clientX - rect.left;
+        game.mouse.y = e.clientY - rect.top;
+    });
+
+    // Mic Logic
     const startRec = async (e) => {
         if(e) e.preventDefault();
         await audio.init();
@@ -241,7 +353,7 @@
         mediaRecorder.onstop = async () => {
             const blob = new Blob(chunks, { 'type' : 'audio/ogg; codecs=opus' });
             const buf = await audio.ctx.decodeAudioData(await blob.arrayBuffer());
-            const src = audio.playBuffer(buf);
+            const src = audio.playVoice(buf);
             game.talking = true; src.onended = () => game.talking = false;
         };
     };
@@ -249,117 +361,199 @@
     micBtn.addEventListener('mousedown', startRec); micBtn.addEventListener('touchstart', startRec);
     micBtn.addEventListener('mouseup', stopRec); micBtn.addEventListener('touchend', stopRec);
 
+    // Petting Logic
     canvas.addEventListener('pointerdown', (e) => {
         const rect = canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
-        const cy = canvas.height / 2 - 20; 
+        const cy = canvas.height / 2 + 10;
+        
+        // Physics Ball Interaction
+        if(game.ball) {
+            game.ball.vy = -15; // Kick ball
+            game.ball.vx = (Math.random()-0.5)*20;
+            return;
+        }
+
+        // Dog Interaction
         audio.init();
-        if (y < cy - 50) { game.spawnParticles(x, y, '❤️'); audio.playTone(600, 'sine'); game.animState = 'happy'; game.animTimer = 40; } 
-        else if (y < cy + 80) { game.spawnParticles(x, y, '🐾'); audio.playTone(150, 'square'); }
+        if (y < cy - 60) { game.spawnParticles(x, y, '❤️'); audio.playSfx(600, 'sine'); game.animState = 'happy'; game.animTimer = 40; } 
+        else if (y < cy + 80) { game.spawnParticles(x, y, '✨'); audio.playSfx(150, 'square'); }
     });
 
-    /* RENDER LOOP */
+    /* =========================================
+       4. RENDER LOOP
+       ========================================= */
+    function resize() {
+        canvas.width = document.getElementById('canvas-container').offsetWidth;
+        canvas.height = document.getElementById('canvas-container').offsetHeight;
+    }
+    window.addEventListener('resize', resize);
+    
     function updateUI() {
-        document.getElementById('bar-hunger').style.width = Math.min(100, game.stats.hunger) + '%';
-        document.getElementById('bar-clean').style.width = Math.min(100, game.stats.clean) + '%';
-        document.getElementById('bar-energy').style.width = Math.min(100, game.stats.energy) + '%';
+        document.getElementById('fill-hunger').style.width = game.stats.hunger + '%';
+        document.getElementById('fill-clean').style.width = game.stats.clean + '%';
+        document.getElementById('fill-energy').style.width = game.stats.energy + '%';
     }
 
     function loop() {
         game.frame++;
+        
+        // Stats decay
         if(game.frame % 300 === 0 && game.animState !== 'sleep') {
             game.stats.hunger = Math.max(0, game.stats.hunger - 2);
             game.stats.clean = Math.max(0, game.stats.clean - 1);
             game.stats.energy = Math.max(0, game.stats.energy - 1);
             updateUI();
         }
+
+        // Anim Timer
         if(game.animTimer > 0) { game.animTimer--; if(game.animTimer <= 0) game.animState = 'idle'; }
+
         draw();
         requestAnimationFrame(loop);
     }
 
     function draw() {
-        let bgCol = '#a5d6a7';
-        if(game.room === 'kitchen') bgCol = '#ffe082';
-        if(game.room === 'bath') bgCol = '#81d4fa';
-        if(game.room === 'bed') bgCol = game.animState === 'sleep' ? '#37474f' : '#b39ddb';
-        ctx.fillStyle = bgCol; ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        // Floor - Adjusted
-        ctx.fillStyle = 'rgba(0,0,0,0.1)';
-        ctx.fillRect(0, canvas.height * 0.55, canvas.width, canvas.height * 0.45);
-
-        drawDog();
-        
-        // Flies
-        if(game.stats.clean < 50) {
-            ctx.font = "24px Arial";
-            ctx.fillText("🪰", canvas.width/2 - 70, canvas.height/2 - 60);
-            ctx.fillText("🪰", canvas.width/2 + 70, canvas.height/2 - 100);
+        // Dynamic Backgrounds
+        let bg = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        if(game.room === 'living') { bg.addColorStop(0, '#81ecec'); bg.addColorStop(1, '#00cec9'); }
+        if(game.room === 'kitchen') { bg.addColorStop(0, '#ffeaa7'); bg.addColorStop(1, '#fab1a0'); }
+        if(game.room === 'bath') { bg.addColorStop(0, '#74b9ff'); bg.addColorStop(1, '#0984e3'); }
+        if(game.room === 'bed') { 
+             // Night Mode
+             bg.addColorStop(0, '#2d3436'); bg.addColorStop(1, '#636e72'); 
         }
+        ctx.fillStyle = bg; ctx.fillRect(0,0,canvas.width, canvas.height);
+
+        // Stars for Bedroom
+        if(game.room === 'bed' || game.animState === 'sleep') {
+            ctx.fillStyle = 'white';
+            for(let i=0; i<20; i++) {
+                if((game.frame + i*10) % 100 > 50) 
+                    ctx.fillRect((i*93)%canvas.width, (i*41)%canvas.height/2, 2, 2);
+            }
+        }
+
+        // Floor (Adjusted for mobile)
+        const floorY = canvas.height * 0.65;
+        ctx.fillStyle = 'rgba(0,0,0,0.1)';
+        ctx.fillRect(0, floorY, canvas.width, canvas.height - floorY);
+
+        // Physics Ball Logic
+        if(game.ball) {
+            game.ball.update(floorY + 80, canvas.width); // +80 allows it to roll visually "in front"
+            game.ball.draw(ctx);
+        }
+
+        drawDog(floorY);
+        
         // Particles
-        for(let i = game.particles.length - 1; i >= 0; i--) {
-            let p = game.particles[i]; p.x += p.vx; p.y += p.vy; p.vy += 0.5; p.life -= 0.02;
+        for(let i = game.particles.length-1; i>=0; i--) {
+            let p = game.particles[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=0.5; p.life-=0.02;
             ctx.globalAlpha = p.life; ctx.font = "30px Arial"; ctx.fillText(p.char, p.x, p.y);
-            ctx.globalAlpha = 1; if(p.life <= 0) game.particles.splice(i, 1);
+            ctx.globalAlpha = 1; if(p.life<=0) game.particles.splice(i,1);
+        }
+        
+        // Flies Overlay
+        if(game.stats.clean < 50) {
+            ctx.font = "24px Arial"; 
+            let flyX = canvas.width/2 + Math.sin(game.frame*0.1)*60;
+            ctx.fillText("🪰", flyX, floorY - 100);
         }
     }
 
-    function drawDog() {
+    function drawDog(floorY) {
         const cx = canvas.width / 2;
-        let cy = canvas.height / 2 - 20; 
-        let breath = Math.sin(game.frame * 0.08) * 3;
-        if(game.animState === 'jump') cy -= Math.abs(Math.sin(game.frame * 0.2) * 80);
-
-        ctx.save(); ctx.translate(cx, cy);
+        const cy = floorY - 30; // Anchor dog to floor
         
+        // Physics tweaks
+        let breath = Math.sin(game.frame * 0.08) * 3;
+        let bounce = (game.animState === 'jump') ? Math.abs(Math.sin(game.frame*0.2)*80) : 0;
+        
+        ctx.save();
+        ctx.translate(cx, cy - bounce);
+
         // Tail
         ctx.beginPath(); ctx.strokeStyle = '#8d6e63'; ctx.lineWidth = 15; ctx.lineCap = 'round';
         let tailSpeed = (game.animState === 'happy' || game.talking) ? 0.5 : 0.1;
-        let tailWag = Math.cos(game.frame * tailSpeed) * 30;
-        ctx.moveTo(40, 40); ctx.quadraticCurveTo(70, 20, 70 + tailWag, -30); ctx.stroke();
+        let tailWag = Math.cos(game.frame * tailSpeed) * 35;
+        ctx.moveTo(45, 20); ctx.quadraticCurveTo(75, 0, 75 + tailWag, -40); ctx.stroke();
 
         // Body
-        ctx.fillStyle = '#8d6e63'; ctx.beginPath(); ctx.ellipse(0, 50, 65, 75 + breath, 0, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = '#d7ccc8'; ctx.beginPath(); ctx.ellipse(0, 60, 35, 45 + breath, 0, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#8d6e63'; 
+        ctx.beginPath(); ctx.ellipse(0, 0, 70, 80 + breath, 0, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#d7ccc8'; // Belly
+        ctx.beginPath(); ctx.ellipse(0, 10, 40, 50 + breath, 0, 0, Math.PI*2); ctx.fill();
 
-        // Head
-        ctx.translate(0, -70 + breath);
-        ctx.fillStyle = '#5d4037'; // Ears
-        ctx.beginPath(); ctx.moveTo(-50, -30); ctx.bezierCurveTo(-90, -10, -80, 60, -50, 40); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(50, -30); ctx.bezierCurveTo(90, -10, 80, 60, 50, 40); ctx.fill();
-        ctx.fillStyle = '#8d6e63'; ctx.beginPath(); ctx.arc(0, 0, 65, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = '#efebe9'; ctx.beginPath(); ctx.ellipse(0, 20, 35, 28, 0, 0, Math.PI*2); ctx.fill(); // Snout
-        ctx.fillStyle = '#3e2723'; ctx.beginPath(); ctx.arc(0, 10, 12, 0, Math.PI*2); ctx.fill(); // Nose
+        // --- HEAD ---
+        ctx.translate(0, -90 + breath);
+        
+        // Ears (Wiggle)
+        let earWiggle = (game.talking) ? Math.sin(game.frame*0.5)*5 : 0;
+        ctx.fillStyle = '#5d4037';
+        ctx.beginPath(); ctx.moveTo(-50, -30); ctx.bezierCurveTo(-100, -10, -90, 80+earWiggle, -50, 40); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(50, -30); ctx.bezierCurveTo(100, -10, 90, 80+earWiggle, 50, 40); ctx.fill();
 
-        // Eyes
-        let eyeOpen = (game.animState === 'sleep') ? 1 : 12;
-        ctx.fillStyle = 'white'; ctx.beginPath(); ctx.ellipse(-25, -20, 14, eyeOpen, 0, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.ellipse(25, -20, 14, eyeOpen, 0, 0, Math.PI*2); ctx.fill();
-        if(eyeOpen > 2) { ctx.fillStyle = 'black'; ctx.beginPath(); ctx.arc(-25, -20, 6, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(25, -20, 6, 0, Math.PI*2); ctx.fill(); }
+        // Head Shape
+        ctx.fillStyle = '#8d6e63'; ctx.beginPath(); ctx.arc(0, 0, 70, 0, Math.PI*2); ctx.fill();
+        
+        // Snout
+        ctx.fillStyle = '#efebe9'; ctx.beginPath(); ctx.ellipse(0, 25, 40, 32, 0, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#2d3436'; ctx.beginPath(); ctx.arc(0, 15, 14, 0, Math.PI*2); ctx.fill(); // Nose
+        
+        // --- EYES (Tracking) ---
+        let eyeOpen = (game.animState === 'sleep') ? 1 : 14;
+        
+        // Calc Target (Ball or Mouse)
+        let targetX = game.ball ? game.ball.x : game.mouse.x;
+        let targetY = game.ball ? game.ball.y : game.mouse.y;
+        
+        // Eye White
+        ctx.fillStyle = 'white';
+        ctx.beginPath(); ctx.ellipse(-30, -20, 16, eyeOpen, 0, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(30, -20, 16, eyeOpen, 0, 0, Math.PI*2); ctx.fill();
+
+        if(eyeOpen > 2) {
+            // Pupil Tracking Math
+            let dx = targetX - (cx); 
+            let dy = targetY - (cy - 90);
+            let angle = Math.atan2(dy, dx);
+            let dist = Math.min(6, Math.hypot(dx, dy) / 30); // Limit movement
+            
+            let pupX = Math.cos(angle) * dist;
+            let pupY = Math.sin(angle) * dist;
+
+            ctx.fillStyle = 'black';
+            ctx.beginPath(); ctx.arc(-30 + pupX, -20 + pupY, 7, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(30 + pupX, -20 + pupY, 7, 0, Math.PI*2); ctx.fill();
+        }
 
         // Mouth
         ctx.fillStyle = '#e57373';
         if(game.talking || game.animState === 'happy') {
-            ctx.beginPath(); ctx.arc(0, 30, 15, 0, Math.PI); ctx.fillStyle = '#3e2723'; ctx.fill();
-            ctx.fillStyle = '#ff5252'; ctx.beginPath(); ctx.ellipse(0, 45, 8, 12, 0, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(0, 40, 15, 0, Math.PI); ctx.fillStyle = '#2d3436'; ctx.fill();
+            ctx.fillStyle = '#ff7675'; ctx.beginPath(); ctx.ellipse(0, 52, 8, 10, 0, 0, Math.PI*2); ctx.fill(); // Tongue
         } else {
-            ctx.beginPath(); ctx.strokeStyle = '#3e2723'; ctx.lineWidth = 3;
-            ctx.moveTo(0, 35); ctx.lineTo(0, 45); ctx.moveTo(0, 45); ctx.quadraticCurveTo(-15, 45, -20, 35); ctx.moveTo(0, 45); ctx.quadraticCurveTo(15, 45, 20, 35); ctx.stroke();
+            ctx.beginPath(); ctx.strokeStyle = '#2d3436'; ctx.lineWidth = 3;
+            ctx.moveTo(0, 40); ctx.lineTo(0, 50); 
+            ctx.moveTo(0, 50); ctx.quadraticCurveTo(-15, 50, -20, 40); 
+            ctx.moveTo(0, 50); ctx.quadraticCurveTo(15, 50, 20, 40); ctx.stroke();
         }
-        
+
         // Collar
-        ctx.fillStyle = '#d32f2f'; ctx.fillRect(-35, 55, 70, 10);
-        ctx.fillStyle = '#ffeb3b'; ctx.beginPath(); ctx.arc(0, 65, 6, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#ff7675'; ctx.fillRect(-40, 60, 80, 12);
+        ctx.fillStyle = '#ffeaa7'; ctx.beginPath(); ctx.arc(0, 72, 8, 0, Math.PI*2); ctx.fill();
+
         ctx.restore();
     }
 
-    document.getElementById('init-btn').addEventListener('click', () => {
-        document.getElementById('overlay').style.display = 'none';
-        resize(); // Resize once overlay gone
-        audio.init(); loop();
+    // Init
+    document.getElementById('start-btn').addEventListener('click', () => {
+        document.getElementById('start-overlay').style.display = 'none';
+        resize(); audio.init(); loop();
     });
+
 </script>
 </body>
 </html>
