@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Elite Premium Golden Dog (Auto-Save)</title>
+    <title>Elite Premium Golden Dog (Fixed Voice)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Montserrat:wght@300;600&display=swap');
 
@@ -230,11 +230,15 @@
 </div>
 
 <script>
-    /** AUDIO SYSTEM **/
+    /** AUDIO SYSTEM (FIXED FOR RELOAD ISSUE) **/
     const AudioSys = {
         ctx: new (window.AudioContext || window.webkitAudioContext)(),
-        rec: null, chunks: [],
+        rec: null, 
+        chunks: [],
+        stream: null, // Store stream to stop tracks later
+
         init() { if(this.ctx.state==='suspended') this.ctx.resume(); },
+
         sfx(t) {
             this.init();
             const o=this.ctx.createOscillator(), g=this.ctx.createGain();
@@ -251,38 +255,68 @@
                 o.start(); o.stop(n+0.5);
             }
         },
+
         async rec() {
             try {
                 this.init();
-                const s = await navigator.mediaDevices.getUserMedia({audio:true});
-                this.rec = new MediaRecorder(s);
+                // Store the stream so we can stop it later
+                this.stream = await navigator.mediaDevices.getUserMedia({audio:true});
+                this.rec = new MediaRecorder(this.stream);
                 this.chunks=[];
                 this.rec.ondataavailable=e=>this.chunks.push(e.data);
                 this.rec.start();
                 document.getElementById('mic-btn').classList.add('active');
                 Game.dog.anim='listen';
-            } catch(e) {}
+            } catch(e) {
+                UI.toast("Mic Permission Denied");
+            }
         },
+
         stop() {
             if(!this.rec || this.rec.state==='inactive') return;
             this.rec.stop();
             document.getElementById('mic-btn').classList.remove('active');
+            
+            // IMPORTANT FIX: Stop all tracks to release microphone
+            if(this.stream) {
+                this.stream.getTracks().forEach(track => track.stop());
+                this.stream = null;
+            }
+
             this.rec.onstop = async () => {
                 const b = new Blob(this.chunks,{type:'audio/ogg; codecs=opus'});
                 const buf = await this.ctx.decodeAudioData(await b.arrayBuffer());
+                
                 const src = this.ctx.createBufferSource();
-                src.buffer=buf; src.playbackRate.value=1.3;
+                src.buffer=buf; 
+                src.playbackRate.value=1.3; // Pitch shift
+                
+                // Add Reverb/Echo effect
+                const gain = this.ctx.createGain();
+                const delay = this.ctx.createDelay();
+                delay.delayTime.value = 0.1;
+                gain.gain.value = 0.3;
+                
                 src.connect(this.ctx.destination);
+                src.connect(delay);
+                delay.connect(gain);
+                gain.connect(this.ctx.destination);
+
                 src.start();
                 Game.dog.anim='talk';
-                src.onended=()=>Game.dog.anim='idle';
+                
+                src.onended=()=> {
+                    Game.dog.anim='idle';
+                    // Reset recorder so it can be used again
+                    this.rec = null;
+                };
             };
         }
     };
 
     /** SAVE SYSTEM (LocalStorage) **/
     const SaveSys = {
-        key: 'eliteGoldenDogData_v2',
+        key: 'eliteGoldenDogData_v3',
         save() {
             const data = {
                 cash: Game.cash,
@@ -358,7 +392,7 @@
                 this.owned++;
                 AudioSys.sfx('cash');
                 UI.update();
-                SaveSys.save(); // Save Immediately
+                SaveSys.save();
                 this.update();
             } else UI.toast("Insufficient Funds");
         },
@@ -368,7 +402,7 @@
                 this.owned--;
                 AudioSys.sfx('cash');
                 UI.update();
-                SaveSys.save(); // Save Immediately
+                SaveSys.save();
                 this.update();
             }
         }
@@ -396,11 +430,11 @@
         init() {
             this.resize();
             window.addEventListener('resize', ()=>this.resize());
-            SaveSys.load(); // LOAD DATA
+            SaveSys.load(); 
             this.loop();
             setInterval(()=>this.logic(), 1000);
             setInterval(()=>StockMarket.update(), 2000);
-            setInterval(()=>SaveSys.save(), 10000); // Auto save every 10s
+            setInterval(()=>SaveSys.save(), 10000);
         },
 
         resize() {
@@ -444,7 +478,7 @@
         },
 
         buyAsset(type, cost, inc) {
-            if(this.ownedAssets[type]) return; // One time purchase for simplicity in this demo, or stack logic
+            if(this.ownedAssets[type]) return; 
             
             if(this.cash >= cost) {
                 this.cash -= cost;
@@ -453,7 +487,7 @@
                 UI.toast("Asset Acquired");
                 AudioSys.sfx('cash');
                 UI.update();
-                UI.renderShop(); // Update shop UI state
+                UI.renderShop();
                 SaveSys.save();
             } else UI.toast("Insufficient Funds");
         },
@@ -500,6 +534,19 @@
                 for(let i=0; i<30; i++) {
                     if(Math.random()>0.9) ctx.fillRect(Math.random()*W, H-Math.random()*300, 2, 2);
                 }
+            }
+            if(this.location==='moon') {
+                ctx.fillStyle = '#111';
+                ctx.beginPath(); ctx.arc(100, 100, 50, 0, Math.PI*2); ctx.fill(); // Earth
+                ctx.fillStyle = '#0984e3'; ctx.beginPath(); ctx.arc(95, 100, 48, 0, Math.PI*2); ctx.fill();
+            }
+            if(this.location==='yacht') {
+                ctx.fillStyle = 'rgba(255,255,255,0.1)';
+                const t = Date.now()/1000;
+                ctx.beginPath();
+                for(let i=0; i<W; i+=20) ctx.lineTo(i, H-100 + Math.sin(i*0.05 + t)*10);
+                ctx.lineTo(W,H); ctx.lineTo(0,H);
+                ctx.fill();
             }
         },
 
