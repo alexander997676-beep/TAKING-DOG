@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Elite Premium Golden Dog</title>
+    <title>Elite Premium Golden Dog (Auto-Save)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Montserrat:wght@300;600&display=swap');
 
@@ -94,7 +94,7 @@
         }
         .modal-content {
             background: #0a0a0a; width: 90%; max-width: 600px;
-            border: 1px solid var(--gold); padding: 2px; /* Double border hack */
+            border: 1px solid var(--gold); padding: 2px;
             box-shadow: 0 0 60px rgba(184, 134, 11, 0.3);
         }
         .inner-box {
@@ -103,7 +103,6 @@
         }
         h2 { margin: 0; font-family: 'Cinzel', serif; color: var(--gold); text-align: center; font-size: 30px; }
 
-        /* STOCK MARKET GRAPH */
         .graph-container {
             width: 100%; height: 150px; background: #111; border: 1px solid #333;
             position: relative; overflow: hidden; display: flex; align-items: flex-end; gap: 2px;
@@ -116,23 +115,26 @@
             display: flex; justify-content: space-between; align-items: center;
         }
         .card:hover { border-color: var(--gold); background: #222; }
+        .card.owned-item { border-color: #2ecc71; opacity: 0.6; pointer-events: none; }
         .card h4 { margin: 0; color: white; }
         .card small { color: #888; }
         .price { color: var(--gold); font-weight: bold; }
 
-        /* GHOST */
         #ghost {
             position: fixed; font-size: 60px; pointer-events: none; z-index: 500;
             display: none; transform: translate(-50%, -50%); filter: drop-shadow(0 0 15px var(--gold));
         }
 
-        /* TOAST */
         .toast {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
             background: var(--gold-grad); color: black; padding: 20px 40px;
             font-family: 'Cinzel', serif; font-weight: 900; font-size: 20px;
             opacity: 0; pointer-events: none; transition: 0.4s; z-index: 200;
             box-shadow: 0 0 30px var(--gold);
+        }
+
+        .reset-btn {
+            background: #c0392b; color: white; border: none; padding: 10px; cursor: pointer; width: 100%; margin-top:10px;
         }
 
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
@@ -161,6 +163,7 @@
         <div class="wealth-display">
             <div class="net-worth">$<span id="cash-txt">0</span></div>
             <div class="income">+<span id="income-txt">0</span>/sec</div>
+            <div style="font-size:10px; color:#888;">(Auto Saved)</div>
         </div>
     </div>
 
@@ -173,10 +176,8 @@
     </div>
 </div>
 
-<!-- GHOST -->
 <div id="ghost"></div>
-<!-- TOAST -->
-<div id="toast">PURCHASE SUCCESSFUL</div>
+<div id="toast">SAVED</div>
 
 <!-- STOCKS MODAL -->
 <div id="modal-stocks" class="modal">
@@ -185,9 +186,7 @@
             <h2>Wall Street</h2>
             <button class="lux-btn" style="width:40px; height:40px; font-size:16px;" onclick="UI.close()">✕</button>
         </div>
-        <div class="graph-container" id="stock-graph">
-            <!-- Bars injected by JS -->
-        </div>
+        <div class="graph-container" id="stock-graph"></div>
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <div>
                 <div style="color:#888;">DOGE COIN</div>
@@ -210,23 +209,8 @@
             <h2>Real Estate</h2>
             <button class="lux-btn" style="width:40px; height:40px; font-size:16px;" onclick="UI.close()">✕</button>
         </div>
-        <div class="grid">
-            <div class="card" onclick="Game.travel('penthouse', 0)">
-                <div><h4>Penthouse</h4><small>City View</small></div>
-                <div class="price">OWNED</div>
-            </div>
-            <div class="card" onclick="Game.travel('yacht', 50000)">
-                <div><h4>Mega Yacht</h4><small>Ocean View</small></div>
-                <div class="price">$50k</div>
-            </div>
-            <div class="card" onclick="Game.travel('moon', 1000000)">
-                <div><h4>Moon Base</h4><small>Space View</small></div>
-                <div class="price">$1M</div>
-            </div>
-            <div class="card" onclick="Game.travel('gold_room', 5000000)">
-                <div><h4>Vault</h4><small>Solid Gold</small></div>
-                <div class="price">$5M</div>
-            </div>
+        <div class="grid" id="estate-grid">
+            <!-- Populated by JS -->
         </div>
     </div></div>
 </div>
@@ -238,24 +222,10 @@
             <h2>Elite Boutique</h2>
             <button class="lux-btn" style="width:40px; height:40px; font-size:16px;" onclick="UI.close()">✕</button>
         </div>
-        <div class="grid">
-            <div class="card" onclick="Game.buyAsset('miner', 1000, 10)">
-                <div><h4>Crypto Rig</h4><small>+10 $/sec</small></div>
-                <div class="price">$1k</div>
-            </div>
-            <div class="card" onclick="Game.buyAsset('hotel', 10000, 150)">
-                <div><h4>Hotel Chain</h4><small>+150 $/sec</small></div>
-                <div class="price">$10k</div>
-            </div>
-            <div class="card" onclick="Game.buySkin('gold', 20000)">
-                <div><h4>Gold Skin</h4><small>24 Karat</small></div>
-                <div class="price">$20k</div>
-            </div>
-            <div class="card" onclick="Game.buySkin('diamond', 100000)">
-                <div><h4>Diamond</h4><small>Indestructible</small></div>
-                <div class="price">$100k</div>
-            </div>
+        <div class="grid" id="shop-grid">
+            <!-- Populated by JS -->
         </div>
+        <button class="reset-btn" onclick="SaveSys.reset()">⚠️ RESET ALL PROGRESS</button>
     </div></div>
 </div>
 
@@ -264,7 +234,6 @@
     const AudioSys = {
         ctx: new (window.AudioContext || window.webkitAudioContext)(),
         rec: null, chunks: [],
-        
         init() { if(this.ctx.state==='suspended') this.ctx.resume(); },
         sfx(t) {
             this.init();
@@ -311,21 +280,58 @@
         }
     };
 
+    /** SAVE SYSTEM (LocalStorage) **/
+    const SaveSys = {
+        key: 'eliteGoldenDogData_v2',
+        save() {
+            const data = {
+                cash: Game.cash,
+                income: Game.income,
+                location: Game.location,
+                skin: Game.skin,
+                unlockedLocs: Game.unlockedLocs,
+                unlockedSkins: Game.unlockedSkins,
+                ownedAssets: Game.ownedAssets,
+                stockOwned: StockMarket.owned,
+                needs: Game.needs
+            };
+            localStorage.setItem(this.key, JSON.stringify(data));
+        },
+        load() {
+            const saved = localStorage.getItem(this.key);
+            if(saved) {
+                const d = JSON.parse(saved);
+                Game.cash = d.cash || 5000;
+                Game.income = d.income || 0;
+                Game.location = d.location || 'penthouse';
+                Game.skin = d.skin || 'default';
+                Game.unlockedLocs = d.unlockedLocs || ['penthouse'];
+                Game.unlockedSkins = d.unlockedSkins || ['default'];
+                Game.ownedAssets = d.ownedAssets || {};
+                StockMarket.owned = d.stockOwned || 0;
+                Game.needs = d.needs || {food:80,clean:80,energy:90};
+            }
+        },
+        reset() {
+            if(confirm("Are you sure you want to reset all progress? This cannot be undone.")) {
+                localStorage.removeItem(this.key);
+                location.reload();
+            }
+        }
+    };
+
     /** STOCK MARKET ENGINE **/
     const StockMarket = {
         price: 100,
         history: [],
         owned: 0,
-        trend: 0,
-
+        
         update() {
-            // Random walk
             const change = (Math.random()-0.48) * 10;
             this.price = Math.max(10, this.price + change);
             this.history.push(this.price);
             if(this.history.length > 20) this.history.shift();
             
-            // UI Update
             if(document.getElementById('modal-stocks').style.display === 'flex') {
                 this.drawGraph();
                 document.getElementById('stock-price').innerText = this.price.toFixed(2);
@@ -335,7 +341,6 @@
                 el.style.color = change>0?'#2ecc71':'#e74c3c';
             }
         },
-
         drawGraph() {
             const c = document.getElementById('stock-graph');
             c.innerHTML = '';
@@ -347,23 +352,23 @@
                 c.appendChild(d);
             });
         },
-
         buy() {
             if(Game.cash >= this.price) {
                 Game.cash -= this.price;
                 this.owned++;
                 AudioSys.sfx('cash');
                 UI.update();
-                this.update(); // refresh UI
+                SaveSys.save(); // Save Immediately
+                this.update();
             } else UI.toast("Insufficient Funds");
         },
-
         sell() {
             if(this.owned > 0) {
                 Game.cash += this.price;
                 this.owned--;
                 AudioSys.sfx('cash');
                 UI.update();
+                SaveSys.save(); // Save Immediately
                 this.update();
             }
         }
@@ -381,6 +386,7 @@
         skin: 'default',
         unlockedLocs: ['penthouse'],
         unlockedSkins: ['default'],
+        ownedAssets: {},
         
         needs: { food:80, clean:80, energy:90 },
         
@@ -390,9 +396,11 @@
         init() {
             this.resize();
             window.addEventListener('resize', ()=>this.resize());
+            SaveSys.load(); // LOAD DATA
             this.loop();
             setInterval(()=>this.logic(), 1000);
             setInterval(()=>StockMarket.update(), 2000);
+            setInterval(()=>SaveSys.save(), 10000); // Auto save every 10s
         },
 
         resize() {
@@ -402,15 +410,11 @@
         },
 
         logic() {
-            // Passive Income
             this.cash += this.income;
-            
-            // Needs
             this.needs.food = Math.max(0, this.needs.food-1);
             this.needs.clean = Math.max(0, this.needs.clean-0.5);
             this.needs.energy = Math.max(0, this.needs.energy-0.5);
             
-            // Rank
             let rank = 1;
             if(this.cash > 100000) rank=2;
             if(this.cash > 1000000) rank=3;
@@ -425,6 +429,7 @@
                 this.location = loc;
                 UI.toast("Welcome to " + loc.toUpperCase());
                 UI.close();
+                SaveSys.save();
             } else if (this.cash >= cost) {
                 this.cash -= cost;
                 this.unlockedLocs.push(loc);
@@ -432,24 +437,31 @@
                 UI.toast("Property Acquired!");
                 AudioSys.sfx('cash');
                 UI.close();
+                SaveSys.save();
             } else {
                 UI.toast("Insufficient Funds");
             }
         },
 
         buyAsset(type, cost, inc) {
+            if(this.ownedAssets[type]) return; // One time purchase for simplicity in this demo, or stack logic
+            
             if(this.cash >= cost) {
                 this.cash -= cost;
                 this.income += inc;
+                this.ownedAssets[type] = true;
                 UI.toast("Asset Acquired");
                 AudioSys.sfx('cash');
                 UI.update();
+                UI.renderShop(); // Update shop UI state
+                SaveSys.save();
             } else UI.toast("Insufficient Funds");
         },
 
         buySkin(skin, cost) {
             if(this.unlockedSkins.includes(skin)) {
                 this.skin = skin; UI.toast("Skin Applied"); UI.close();
+                SaveSys.save();
             } else if (this.cash >= cost) {
                 this.cash -= cost;
                 this.unlockedSkins.push(skin);
@@ -457,6 +469,7 @@
                 UI.toast("Luxury Skin Acquired");
                 AudioSys.sfx('sparkle');
                 UI.close();
+                SaveSys.save();
             } else {
                 UI.toast("Too Expensive");
             }
@@ -482,25 +495,11 @@
             g.addColorStop(0, top); g.addColorStop(1, bot);
             ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
 
-            // Scenery
             if(this.location==='penthouse') {
                 ctx.fillStyle = '#f1c40f';
                 for(let i=0; i<30; i++) {
                     if(Math.random()>0.9) ctx.fillRect(Math.random()*W, H-Math.random()*300, 2, 2);
                 }
-            }
-            if(this.location==='moon') {
-                ctx.fillStyle = '#111';
-                ctx.beginPath(); ctx.arc(100, 100, 50, 0, Math.PI*2); ctx.fill(); // Earth
-                ctx.fillStyle = '#0984e3'; ctx.beginPath(); ctx.arc(95, 100, 48, 0, Math.PI*2); ctx.fill();
-            }
-            if(this.location==='yacht') {
-                ctx.fillStyle = 'rgba(255,255,255,0.1)';
-                const t = Date.now()/1000;
-                ctx.beginPath();
-                for(let i=0; i<W; i+=20) ctx.lineTo(i, H-100 + Math.sin(i*0.05 + t)*10);
-                ctx.lineTo(W,H); ctx.lineTo(0,H);
-                ctx.fill();
             }
         },
 
@@ -513,49 +512,43 @@
             ctx.translate(d.x, d.y);
             ctx.scale(1, sy);
 
-            // Material Settings
             let mainC='#bdc3c7', shadC='#7f8c8d', shine='rgba(255,255,255,0.1)';
             if(this.skin==='gold') { mainC='#f1c40f'; shadC='#b7950b'; shine='rgba(255,255,255,0.4)'; }
             if(this.skin==='diamond') { mainC='#00f3ff'; shadC='#0097e6'; shine='rgba(255,255,255,0.6)'; }
 
-            // Glow for Diamond
             if(this.skin==='diamond') { ctx.shadowBlur=20; ctx.shadowColor='#00f3ff'; }
 
-            // Shadow
             ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.shadowBlur=0;
             ctx.beginPath(); ctx.ellipse(0, 95, 80, 20, 0,0,Math.PI*2); ctx.fill();
 
-            // Tail
             if(d.anim!=='sleep') {
                 const wag = Math.sin(Date.now()/100)*15;
                 ctx.strokeStyle=shadC; ctx.lineWidth=18; ctx.lineCap='round';
                 ctx.beginPath(); ctx.moveTo(40,60); ctx.quadraticCurveTo(70,50,80,10+wag); ctx.stroke();
             }
 
-            // Body
             const bodyG = ctx.createRadialGradient(-20,-20,10,0,0,80);
             bodyG.addColorStop(0, mainC); bodyG.addColorStop(1, shadC);
             ctx.fillStyle=bodyG;
             ctx.beginPath(); ctx.moveTo(-45,80); ctx.quadraticCurveTo(-70,80,-60,-20);
             ctx.lineTo(60,-20); ctx.quadraticCurveTo(70,80,45,80); ctx.fill();
 
-            // Head
+            ctx.fillStyle=shine; ctx.globalAlpha=0.3;
+            ctx.beginPath(); ctx.ellipse(0,40,30,45,0,0,Math.PI*2); ctx.fill();
+            ctx.globalAlpha=1;
+
             ctx.translate(0, -60+b);
-            // Ears
             ctx.fillStyle=shadC;
             ctx.beginPath(); ctx.ellipse(-50,0,20,50,0.2,0,Math.PI*2); ctx.fill();
             ctx.beginPath(); ctx.ellipse(50,0,20,50,-0.2,0,Math.PI*2); ctx.fill();
 
-            // Head Shape
             const headG = ctx.createRadialGradient(0,0,10,0,0,70);
             headG.addColorStop(0, mainC); headG.addColorStop(1, shadC);
             ctx.fillStyle=headG; ctx.beginPath(); ctx.arc(0,0,70,0,Math.PI*2); ctx.fill();
 
-            // Specular Shine
             ctx.fillStyle=shine;
             ctx.beginPath(); ctx.ellipse(-20, -30, 10, 20, -0.5, 0, Math.PI*2); ctx.fill();
 
-            // Eyes
             const lx = (Input.x-W/2)/30; const ly = (Input.y-H/2)/30;
             ctx.fillStyle='white';
             ctx.beginPath(); ctx.ellipse(-25,-5,15,20,0,0,Math.PI*2); ctx.fill();
@@ -566,13 +559,11 @@
             ctx.beginPath(); ctx.arc(-25+px,-5+py,8,0,Math.PI*2); ctx.fill();
             ctx.beginPath(); ctx.arc(25+px,-5+py,8,0,Math.PI*2); ctx.fill();
 
-            // Snout
             ctx.fillStyle='white'; ctx.globalAlpha=0.7;
             ctx.beginPath(); ctx.ellipse(0,20,30,22,0,0,Math.PI*2); ctx.fill();
             ctx.globalAlpha=1;
             ctx.fillStyle='#000'; ctx.beginPath(); ctx.ellipse(0,15,14,9,0,0,Math.PI*2); ctx.fill();
 
-            // Mouth
             if(d.anim==='talk') {
                 ctx.fillStyle='#e74c3c';
                 const o=10+Math.abs(Math.sin(Date.now()/50)*15);
@@ -594,7 +585,6 @@
                 p.x+=p.vx; p.y+=p.vy; p.life-=0.02;
                 ctx.globalAlpha=p.life;
                 if(p.t==='✨') { ctx.fillStyle='gold'; ctx.fillText('✦',p.x,p.y); }
-                else if(p.t==='💵') { ctx.fillStyle='#2ecc71'; ctx.font='20px Arial'; ctx.fillText('$',p.x,p.y); }
                 else { ctx.font='24px Arial'; ctx.fillText(p.t,p.x,p.y); }
                 ctx.globalAlpha=1;
                 if(p.life<=0) this.particles.splice(i,1);
@@ -626,9 +616,13 @@
             if(!this.drag) return;
             if(Math.hypot(this.x-Game.dog.x, this.y-(Game.dog.y-50)) < 100) {
                 if(this.drag==='caviar') {
-                    Game.needs.food = Math.min(100, Game.needs.food+30);
-                    Game.dog.scaleY=0.8; AudioSys.sfx('coin');
-                    Game.particles.push({x:Game.dog.x,y:Game.dog.y-50,t:'😋',vx:0,vy:-2,life:1});
+                    if(Game.cash >= 50) {
+                        Game.cash-=50;
+                        Game.needs.food = Math.min(100, Game.needs.food+30);
+                        Game.dog.scaleY=0.8; AudioSys.sfx('coin');
+                        Game.particles.push({x:Game.dog.x,y:Game.dog.y-50,t:'😋',vx:0,vy:-2,life:1});
+                        UI.update(); SaveSys.save();
+                    } else UI.toast("Caviar costs $50");
                 }
             }
             this.drag=null;
@@ -646,12 +640,50 @@
             document.getElementById('fill-clean').style.transform = `scaleY(${Game.needs.clean/100})`;
             document.getElementById('fill-energy').style.transform = `scaleY(${Game.needs.energy/100})`;
         },
-        open(id) { document.getElementById('modal-'+id).style.display='flex'; },
+        open(id) { 
+            if(id==='shop') this.renderShop();
+            if(id==='travel') this.renderEstate();
+            document.getElementById('modal-'+id).style.display='flex'; 
+        },
         close() { document.querySelectorAll('.modal').forEach(m=>m.style.display='none'); },
         toast(m) {
             const t=document.getElementById('toast');
             t.innerText=m; t.style.opacity=1;
             setTimeout(()=>t.style.opacity=0, 2000);
+        },
+        renderShop() {
+            const grid = document.getElementById('shop-grid');
+            grid.innerHTML = `
+                <div class="card ${Game.ownedAssets['miner']?'owned-item':''}" onclick="Game.buyAsset('miner', 1000, 10)">
+                    <div><h4>Crypto Rig</h4><small>+10 $/sec</small></div><div class="price">$1k</div>
+                </div>
+                <div class="card ${Game.ownedAssets['hotel']?'owned-item':''}" onclick="Game.buyAsset('hotel', 10000, 150)">
+                    <div><h4>Hotel Chain</h4><small>+150 $/sec</small></div><div class="price">$10k</div>
+                </div>
+                <div class="card ${Game.unlockedSkins.includes('gold')?'owned-item':''}" onclick="Game.buySkin('gold', 20000)">
+                    <div><h4>Gold Skin</h4><small>24 Karat</small></div><div class="price">$20k</div>
+                </div>
+                <div class="card ${Game.unlockedSkins.includes('diamond')?'owned-item':''}" onclick="Game.buySkin('diamond', 100000)">
+                    <div><h4>Diamond</h4><small>Indestructible</small></div><div class="price">$100k</div>
+                </div>
+            `;
+        },
+        renderEstate() {
+            const grid = document.getElementById('estate-grid');
+            const locs = [
+                {id:'penthouse', n:'Penthouse', s:'City View', p:0},
+                {id:'yacht', n:'Mega Yacht', s:'Ocean View', p:50000},
+                {id:'moon', n:'Moon Base', s:'Space View', p:1000000},
+                {id:'gold_room', n:'Vault', s:'Solid Gold', p:5000000}
+            ];
+            grid.innerHTML = locs.map(l => {
+                const owned = Game.unlockedLocs.includes(l.id);
+                const priceTxt = owned ? "OWNED" : "$"+(l.p/1000)+"k";
+                return `<div class="card" onclick="Game.travel('${l.id}', ${l.p})">
+                    <div><h4>${l.n}</h4><small>${l.s}</small></div>
+                    <div class="price" style="color:${owned?'#2ecc71':'var(--gold)'}">${priceTxt}</div>
+                </div>`;
+            }).join('');
         }
     };
 
