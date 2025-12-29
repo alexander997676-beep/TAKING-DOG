@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Elite Premium Golden Dog (Fixed Voice)</title>
+    <title>Elite Dog (Voice Fixed Final)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Montserrat:wght@300;600&display=swap');
 
@@ -13,7 +13,6 @@
             --gold-grad: linear-gradient(135deg, #FFF8DC, #FFD700, #B8860B, #8B4513);
             --black: #050505;
             --glass: rgba(20, 20, 20, 0.85);
-            --neon-blue: #00f3ff;
         }
 
         body {
@@ -24,7 +23,7 @@
 
         canvas { display: block; width: 100%; height: 100%; }
 
-        /* --- UI LAYER --- */
+        /* UI LAYER */
         #ui {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none; display: flex; flex-direction: column;
@@ -45,13 +44,11 @@
             box-shadow: 0 0 20px var(--gold);
         }
 
-        .wealth-display {
-            text-align: right; text-shadow: 0 0 10px rgba(0,0,0,0.8);
-        }
+        .wealth-display { text-align: right; text-shadow: 0 0 10px rgba(0,0,0,0.8); }
         .net-worth { font-size: 28px; font-weight: 700; color: var(--gold); font-family: 'Cinzel', serif; }
         .income { font-size: 14px; color: #2ecc71; font-weight: 600; }
 
-        /* STATUS BARS */
+        /* BARS */
         .bars {
             position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
             display: flex; gap: 5px;
@@ -103,12 +100,6 @@
         }
         h2 { margin: 0; font-family: 'Cinzel', serif; color: var(--gold); text-align: center; font-size: 30px; }
 
-        .graph-container {
-            width: 100%; height: 150px; background: #111; border: 1px solid #333;
-            position: relative; overflow: hidden; display: flex; align-items: flex-end; gap: 2px;
-        }
-        .graph-bar { width: 5%; background: #2ecc71; transition: height 0.2s; opacity: 0.8; }
-
         .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
         .card {
             background: #151515; padding: 15px; border: 1px solid #333; cursor: pointer; transition: 0.3s;
@@ -130,11 +121,7 @@
             background: var(--gold-grad); color: black; padding: 20px 40px;
             font-family: 'Cinzel', serif; font-weight: 900; font-size: 20px;
             opacity: 0; pointer-events: none; transition: 0.4s; z-index: 200;
-            box-shadow: 0 0 30px var(--gold);
-        }
-
-        .reset-btn {
-            background: #c0392b; color: white; border: none; padding: 10px; cursor: pointer; width: 100%; margin-top:10px;
+            box-shadow: 0 0 30px var(--gold); text-align: center;
         }
 
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
@@ -163,44 +150,27 @@
         <div class="wealth-display">
             <div class="net-worth">$<span id="cash-txt">0</span></div>
             <div class="income">+<span id="income-txt">0</span>/sec</div>
-            <div style="font-size:10px; color:#888;">(Auto Saved)</div>
         </div>
     </div>
 
     <div class="dock">
-        <button class="lux-btn" data-label="STOCKS" onclick="UI.open('stocks')">📈</button>
+        <!-- Buttons are pointerdown/up to prevent stuck states -->
         <button class="lux-btn" data-label="REAL ESTATE" onclick="UI.open('travel')">✈️</button>
-        <button class="lux-btn" id="mic-btn" onpointerdown="AudioSys.rec()" onpointerup="AudioSys.stop()">🎙️</button>
-        <button class="lux-btn" data-label="LUXURY" onclick="UI.open('shop')">👜</button>
+        <button class="lux-btn" data-label="SHOP" onclick="UI.open('shop')">👜</button>
+        
+        <!-- MICROPHONE BUTTON -->
+        <button class="lux-btn" id="mic-btn" 
+            onpointerdown="AudioSys.startRecording(event)" 
+            onpointerup="AudioSys.stopRecording(event)"
+            onpointerleave="AudioSys.stopRecording(event)">🎙️</button>
+            
         <button class="lux-btn" data-label="FEED" onpointerdown="Input.start('caviar', event)">🍱</button>
+        <button class="lux-btn" data-label="RESET" onclick="SaveSys.reset()">⚠️</button>
     </div>
 </div>
 
 <div id="ghost"></div>
 <div id="toast">SAVED</div>
-
-<!-- STOCKS MODAL -->
-<div id="modal-stocks" class="modal">
-    <div class="modal-content"><div class="inner-box">
-        <div style="display:flex; justify-content:space-between;">
-            <h2>Wall Street</h2>
-            <button class="lux-btn" style="width:40px; height:40px; font-size:16px;" onclick="UI.close()">✕</button>
-        </div>
-        <div class="graph-container" id="stock-graph"></div>
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div>
-                <div style="color:#888;">DOGE COIN</div>
-                <div style="font-size:24px; color:white;">$<span id="stock-price">0</span></div>
-            </div>
-            <div style="color:#2ecc71;" id="stock-change">+0%</div>
-        </div>
-        <div class="grid">
-            <button class="lux-btn" style="width:100%" onclick="StockMarket.buy()">BUY</button>
-            <button class="lux-btn" style="width:100%" onclick="StockMarket.sell()">SELL</button>
-        </div>
-        <div style="text-align:center; color:#888;">Owned: <span id="stock-owned">0</span> Shares</div>
-    </div></div>
-</div>
 
 <!-- REAL ESTATE MODAL -->
 <div id="modal-travel" class="modal">
@@ -209,9 +179,7 @@
             <h2>Real Estate</h2>
             <button class="lux-btn" style="width:40px; height:40px; font-size:16px;" onclick="UI.close()">✕</button>
         </div>
-        <div class="grid" id="estate-grid">
-            <!-- Populated by JS -->
-        </div>
+        <div class="grid" id="estate-grid"></div>
     </div></div>
 </div>
 
@@ -222,101 +190,131 @@
             <h2>Elite Boutique</h2>
             <button class="lux-btn" style="width:40px; height:40px; font-size:16px;" onclick="UI.close()">✕</button>
         </div>
-        <div class="grid" id="shop-grid">
-            <!-- Populated by JS -->
-        </div>
-        <button class="reset-btn" onclick="SaveSys.reset()">⚠️ RESET ALL PROGRESS</button>
+        <div class="grid" id="shop-grid"></div>
     </div></div>
 </div>
 
 <script>
-    /** AUDIO SYSTEM (FIXED FOR RELOAD ISSUE) **/
+    /* =========================================
+       AUDIO SYSTEM (FORCE RESET FIX)
+       ========================================= */
     const AudioSys = {
-        ctx: new (window.AudioContext || window.webkitAudioContext)(),
-        rec: null, 
+        ctx: null,
+        stream: null,
+        recorder: null,
         chunks: [],
-        stream: null, // Store stream to stop tracks later
+        isRecording: false,
 
-        init() { if(this.ctx.state==='suspended') this.ctx.resume(); },
+        init() {
+            if (!this.ctx) {
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (this.ctx.state === 'suspended') {
+                this.ctx.resume();
+            }
+        },
 
         sfx(t) {
             this.init();
-            const o=this.ctx.createOscillator(), g=this.ctx.createGain();
+            const o = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
             o.connect(g); g.connect(this.ctx.destination);
-            const n=this.ctx.currentTime;
+            const n = this.ctx.currentTime;
             
-            if(t==='cash') {
-                o.type='sine'; o.frequency.setValueAtTime(1200,n); o.frequency.linearRampToValueAtTime(2000,n+0.2);
-                g.gain.setValueAtTime(0.1,n); g.gain.linearRampToValueAtTime(0,n+0.4);
-                o.start(); o.stop(n+0.4);
-            } else if(t==='sparkle') {
-                o.type='triangle'; o.frequency.setValueAtTime(600,n); o.frequency.linearRampToValueAtTime(1200,n+0.5);
-                g.gain.setValueAtTime(0.05,n); g.gain.exponentialRampToValueAtTime(0.001,n+0.5);
-                o.start(); o.stop(n+0.5);
+            if (t === 'cash') {
+                o.type = 'sine'; o.frequency.setValueAtTime(1200, n); 
+                o.frequency.linearRampToValueAtTime(2000, n + 0.2);
+                g.gain.setValueAtTime(0.1, n); g.gain.linearRampToValueAtTime(0, n + 0.4);
+                o.start(); o.stop(n + 0.4);
             }
         },
 
-        async rec() {
+        async startRecording(e) {
+            if(e) e.preventDefault();
+            if (this.isRecording) return;
+            
+            this.init();
+            this.isRecording = true;
+            document.getElementById('mic-btn').classList.add('active');
+            Game.dog.anim = 'listen';
+            UI.toast("LISTENING...");
+
             try {
-                this.init();
-                // Store the stream so we can stop it later
-                this.stream = await navigator.mediaDevices.getUserMedia({audio:true});
-                this.rec = new MediaRecorder(this.stream);
-                this.chunks=[];
-                this.rec.ondataavailable=e=>this.chunks.push(e.data);
-                this.rec.start();
-                document.getElementById('mic-btn').classList.add('active');
-                Game.dog.anim='listen';
-            } catch(e) {
-                UI.toast("Mic Permission Denied");
+                this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                this.recorder = new MediaRecorder(this.stream);
+                this.chunks = [];
+
+                this.recorder.ondataavailable = e => this.chunks.push(e.data);
+                this.recorder.start();
+
+            } catch (err) {
+                alert("Microphone Error: " + err.message + "\nCheck browser permissions.");
+                this.forceStop();
             }
         },
 
-        stop() {
-            if(!this.rec || this.rec.state==='inactive') return;
-            this.rec.stop();
-            document.getElementById('mic-btn').classList.remove('active');
+        stopRecording(e) {
+            if(e) e.preventDefault();
+            if (!this.isRecording || !this.recorder) return;
+
+            // Stop Recorder
+            if(this.recorder.state !== 'inactive') this.recorder.stop();
             
-            // IMPORTANT FIX: Stop all tracks to release microphone
-            if(this.stream) {
+            // UI Reset
+            this.isRecording = false;
+            document.getElementById('mic-btn').classList.remove('active');
+
+            // STOP TRACKS IMMEDIATELY (This fixes the lock issue)
+            if (this.stream) {
                 this.stream.getTracks().forEach(track => track.stop());
-                this.stream = null;
             }
 
-            this.rec.onstop = async () => {
-                const b = new Blob(this.chunks,{type:'audio/ogg; codecs=opus'});
-                const buf = await this.ctx.decodeAudioData(await b.arrayBuffer());
+            this.recorder.onstop = async () => {
+                if(this.chunks.length === 0) return;
                 
-                const src = this.ctx.createBufferSource();
-                src.buffer=buf; 
-                src.playbackRate.value=1.3; // Pitch shift
+                const blob = new Blob(this.chunks, { type: 'audio/ogg; codecs=opus' });
+                this.chunks = []; // clear memory
                 
-                // Add Reverb/Echo effect
-                const gain = this.ctx.createGain();
-                const delay = this.ctx.createDelay();
-                delay.delayTime.value = 0.1;
-                gain.gain.value = 0.3;
-                
-                src.connect(this.ctx.destination);
-                src.connect(delay);
-                delay.connect(gain);
-                gain.connect(this.ctx.destination);
-
-                src.start();
-                Game.dog.anim='talk';
-                
-                src.onended=()=> {
-                    Game.dog.anim='idle';
-                    // Reset recorder so it can be used again
-                    this.rec = null;
-                };
+                try {
+                    const buf = await this.ctx.decodeAudioData(await blob.arrayBuffer());
+                    this.playPitch(buf);
+                } catch(e) {
+                    console.error("Audio Decode Error", e);
+                }
             };
+        },
+
+        forceStop() {
+            this.isRecording = false;
+            document.getElementById('mic-btn').classList.remove('active');
+            if (this.stream) this.stream.getTracks().forEach(track => track.stop());
+            this.stream = null;
+            this.recorder = null;
+            Game.dog.anim = 'idle';
+        },
+
+        playPitch(buffer) {
+            const src = this.ctx.createBufferSource();
+            src.buffer = buffer;
+            src.playbackRate.value = 1.35; // Pitch Shift Up
+            
+            const gain = this.ctx.createGain();
+            gain.gain.value = 1.5; // Louder
+
+            src.connect(gain);
+            gain.connect(this.ctx.destination);
+            
+            src.start();
+            Game.dog.anim = 'talk';
+            src.onended = () => { Game.dog.anim = 'idle'; };
         }
     };
 
-    /** SAVE SYSTEM (LocalStorage) **/
+    /* =========================================
+       SAVE SYSTEM
+       ========================================= */
     const SaveSys = {
-        key: 'eliteGoldenDogData_v3',
+        key: 'eliteGoldenDog_FinalFix',
         save() {
             const data = {
                 cash: Game.cash,
@@ -326,7 +324,6 @@
                 unlockedLocs: Game.unlockedLocs,
                 unlockedSkins: Game.unlockedSkins,
                 ownedAssets: Game.ownedAssets,
-                stockOwned: StockMarket.owned,
                 needs: Game.needs
             };
             localStorage.setItem(this.key, JSON.stringify(data));
@@ -342,99 +339,38 @@
                 Game.unlockedLocs = d.unlockedLocs || ['penthouse'];
                 Game.unlockedSkins = d.unlockedSkins || ['default'];
                 Game.ownedAssets = d.ownedAssets || {};
-                StockMarket.owned = d.stockOwned || 0;
                 Game.needs = d.needs || {food:80,clean:80,energy:90};
             }
         },
         reset() {
-            if(confirm("Are you sure you want to reset all progress? This cannot be undone.")) {
+            if(confirm("RESET ALL DATA?")) {
                 localStorage.removeItem(this.key);
                 location.reload();
             }
         }
     };
 
-    /** STOCK MARKET ENGINE **/
-    const StockMarket = {
-        price: 100,
-        history: [],
-        owned: 0,
-        
-        update() {
-            const change = (Math.random()-0.48) * 10;
-            this.price = Math.max(10, this.price + change);
-            this.history.push(this.price);
-            if(this.history.length > 20) this.history.shift();
-            
-            if(document.getElementById('modal-stocks').style.display === 'flex') {
-                this.drawGraph();
-                document.getElementById('stock-price').innerText = this.price.toFixed(2);
-                document.getElementById('stock-owned').innerText = this.owned;
-                const el = document.getElementById('stock-change');
-                el.innerText = (change>0?'+':'') + change.toFixed(2);
-                el.style.color = change>0?'#2ecc71':'#e74c3c';
-            }
-        },
-        drawGraph() {
-            const c = document.getElementById('stock-graph');
-            c.innerHTML = '';
-            this.history.forEach(h => {
-                const d = document.createElement('div');
-                d.className = 'graph-bar';
-                d.style.height = (h/2) + 'px';
-                d.style.background = '#f1c40f';
-                c.appendChild(d);
-            });
-        },
-        buy() {
-            if(Game.cash >= this.price) {
-                Game.cash -= this.price;
-                this.owned++;
-                AudioSys.sfx('cash');
-                UI.update();
-                SaveSys.save();
-                this.update();
-            } else UI.toast("Insufficient Funds");
-        },
-        sell() {
-            if(this.owned > 0) {
-                Game.cash += this.price;
-                this.owned--;
-                AudioSys.sfx('cash');
-                UI.update();
-                SaveSys.save();
-                this.update();
-            }
-        }
-    };
-
-    /** GAME ENGINE **/
+    /* =========================================
+       GAME ENGINE
+       ========================================= */
     const cvs = document.getElementById('cvs');
     const ctx = cvs.getContext('2d');
     let W, H;
 
     const Game = {
-        cash: 5000,
-        income: 0,
-        location: 'penthouse',
-        skin: 'default',
-        unlockedLocs: ['penthouse'],
-        unlockedSkins: ['default'],
-        ownedAssets: {},
-        
+        cash: 5000, income: 0, location: 'penthouse', skin: 'default',
+        unlockedLocs: ['penthouse'], unlockedSkins: ['default'], ownedAssets: {},
         needs: { food:80, clean:80, energy:90 },
-        
-        dog: { x:0, y:0, scaleY:1, anim:'idle', blink:0 },
+        dog: { x:0, y:0, scaleY:1, anim:'idle' },
         particles: [],
 
         init() {
             this.resize();
             window.addEventListener('resize', ()=>this.resize());
-            SaveSys.load(); 
+            SaveSys.load();
             this.loop();
             setInterval(()=>this.logic(), 1000);
-            setInterval(()=>StockMarket.update(), 2000);
-            setInterval(()=>SaveSys.save(), 10000);
+            setInterval(()=>SaveSys.save(), 5000);
         },
 
         resize() {
@@ -463,7 +399,6 @@
                 this.location = loc;
                 UI.toast("Welcome to " + loc.toUpperCase());
                 UI.close();
-                SaveSys.save();
             } else if (this.cash >= cost) {
                 this.cash -= cost;
                 this.unlockedLocs.push(loc);
@@ -471,42 +406,34 @@
                 UI.toast("Property Acquired!");
                 AudioSys.sfx('cash');
                 UI.close();
-                SaveSys.save();
             } else {
                 UI.toast("Insufficient Funds");
             }
         },
 
         buyAsset(type, cost, inc) {
-            if(this.ownedAssets[type]) return; 
-            
+            if(this.ownedAssets[type]) return;
             if(this.cash >= cost) {
                 this.cash -= cost;
                 this.income += inc;
                 this.ownedAssets[type] = true;
                 UI.toast("Asset Acquired");
                 AudioSys.sfx('cash');
-                UI.update();
                 UI.renderShop();
-                SaveSys.save();
             } else UI.toast("Insufficient Funds");
         },
 
         buySkin(skin, cost) {
             if(this.unlockedSkins.includes(skin)) {
                 this.skin = skin; UI.toast("Skin Applied"); UI.close();
-                SaveSys.save();
             } else if (this.cash >= cost) {
                 this.cash -= cost;
                 this.unlockedSkins.push(skin);
                 this.skin = skin;
-                UI.toast("Luxury Skin Acquired");
-                AudioSys.sfx('sparkle');
+                UI.toast("Skin Acquired");
+                AudioSys.sfx('cash');
                 UI.close();
-                SaveSys.save();
-            } else {
-                UI.toast("Too Expensive");
-            }
+            } else UI.toast("Too Expensive");
         },
 
         loop() {
@@ -519,7 +446,6 @@
 
         drawBackground() {
             let top='#000', bot='#111';
-            
             if(this.location==='penthouse') { top='#1a0b2e'; bot='#000'; }
             if(this.location==='yacht') { top='#050510'; bot='#001f3f'; }
             if(this.location==='moon') { top='#000'; bot='#111'; }
@@ -531,22 +457,7 @@
 
             if(this.location==='penthouse') {
                 ctx.fillStyle = '#f1c40f';
-                for(let i=0; i<30; i++) {
-                    if(Math.random()>0.9) ctx.fillRect(Math.random()*W, H-Math.random()*300, 2, 2);
-                }
-            }
-            if(this.location==='moon') {
-                ctx.fillStyle = '#111';
-                ctx.beginPath(); ctx.arc(100, 100, 50, 0, Math.PI*2); ctx.fill(); // Earth
-                ctx.fillStyle = '#0984e3'; ctx.beginPath(); ctx.arc(95, 100, 48, 0, Math.PI*2); ctx.fill();
-            }
-            if(this.location==='yacht') {
-                ctx.fillStyle = 'rgba(255,255,255,0.1)';
-                const t = Date.now()/1000;
-                ctx.beginPath();
-                for(let i=0; i<W; i+=20) ctx.lineTo(i, H-100 + Math.sin(i*0.05 + t)*10);
-                ctx.lineTo(W,H); ctx.lineTo(0,H);
-                ctx.fill();
+                for(let i=0; i<20; i++) if(Math.random()>0.9) ctx.fillRect(Math.random()*W, H-Math.random()*300, 2, 2);
             }
         },
 
@@ -559,31 +470,29 @@
             ctx.translate(d.x, d.y);
             ctx.scale(1, sy);
 
-            let mainC='#bdc3c7', shadC='#7f8c8d', shine='rgba(255,255,255,0.1)';
-            if(this.skin==='gold') { mainC='#f1c40f'; shadC='#b7950b'; shine='rgba(255,255,255,0.4)'; }
-            if(this.skin==='diamond') { mainC='#00f3ff'; shadC='#0097e6'; shine='rgba(255,255,255,0.6)'; }
+            let mainC='#bdc3c7', shadC='#7f8c8d';
+            if(this.skin==='gold') { mainC='#f1c40f'; shadC='#b7950b'; }
+            if(this.skin==='diamond') { mainC='#00f3ff'; shadC='#0097e6'; ctx.shadowBlur=20; ctx.shadowColor='#00f3ff'; }
 
-            if(this.skin==='diamond') { ctx.shadowBlur=20; ctx.shadowColor='#00f3ff'; }
-
+            // Shadow
             ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.shadowBlur=0;
             ctx.beginPath(); ctx.ellipse(0, 95, 80, 20, 0,0,Math.PI*2); ctx.fill();
 
+            // Tail
             if(d.anim!=='sleep') {
                 const wag = Math.sin(Date.now()/100)*15;
                 ctx.strokeStyle=shadC; ctx.lineWidth=18; ctx.lineCap='round';
                 ctx.beginPath(); ctx.moveTo(40,60); ctx.quadraticCurveTo(70,50,80,10+wag); ctx.stroke();
             }
 
+            // Body
             const bodyG = ctx.createRadialGradient(-20,-20,10,0,0,80);
             bodyG.addColorStop(0, mainC); bodyG.addColorStop(1, shadC);
             ctx.fillStyle=bodyG;
             ctx.beginPath(); ctx.moveTo(-45,80); ctx.quadraticCurveTo(-70,80,-60,-20);
             ctx.lineTo(60,-20); ctx.quadraticCurveTo(70,80,45,80); ctx.fill();
 
-            ctx.fillStyle=shine; ctx.globalAlpha=0.3;
-            ctx.beginPath(); ctx.ellipse(0,40,30,45,0,0,Math.PI*2); ctx.fill();
-            ctx.globalAlpha=1;
-
+            // Head
             ctx.translate(0, -60+b);
             ctx.fillStyle=shadC;
             ctx.beginPath(); ctx.ellipse(-50,0,20,50,0.2,0,Math.PI*2); ctx.fill();
@@ -593,24 +502,16 @@
             headG.addColorStop(0, mainC); headG.addColorStop(1, shadC);
             ctx.fillStyle=headG; ctx.beginPath(); ctx.arc(0,0,70,0,Math.PI*2); ctx.fill();
 
-            ctx.fillStyle=shine;
-            ctx.beginPath(); ctx.ellipse(-20, -30, 10, 20, -0.5, 0, Math.PI*2); ctx.fill();
-
-            const lx = (Input.x-W/2)/30; const ly = (Input.y-H/2)/30;
+            // Eyes
             ctx.fillStyle='white';
             ctx.beginPath(); ctx.ellipse(-25,-5,15,20,0,0,Math.PI*2); ctx.fill();
             ctx.beginPath(); ctx.ellipse(25,-5,15,20,0,0,Math.PI*2); ctx.fill();
-            
             ctx.fillStyle='#000';
-            const px=Math.min(5,Math.max(-5,lx)); const py=Math.min(5,Math.max(-5,ly));
-            ctx.beginPath(); ctx.arc(-25+px,-5+py,8,0,Math.PI*2); ctx.fill();
-            ctx.beginPath(); ctx.arc(25+px,-5+py,8,0,Math.PI*2); ctx.fill();
+            const lx=(Input.x-W/2)/30; const ly=(Input.y-H/2)/30;
+            ctx.beginPath(); ctx.arc(-25+Math.min(5,Math.max(-5,lx)),-5+Math.min(5,Math.max(-5,ly)),8,0,Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(25+Math.min(5,Math.max(-5,lx)),-5+Math.min(5,Math.max(-5,ly)),8,0,Math.PI*2); ctx.fill();
 
-            ctx.fillStyle='white'; ctx.globalAlpha=0.7;
-            ctx.beginPath(); ctx.ellipse(0,20,30,22,0,0,Math.PI*2); ctx.fill();
-            ctx.globalAlpha=1;
-            ctx.fillStyle='#000'; ctx.beginPath(); ctx.ellipse(0,15,14,9,0,0,Math.PI*2); ctx.fill();
-
+            // Mouth
             if(d.anim==='talk') {
                 ctx.fillStyle='#e74c3c';
                 const o=10+Math.abs(Math.sin(Date.now()/50)*15);
@@ -624,15 +525,11 @@
         },
 
         drawParticles() {
-            if(Math.random()<0.05 && this.skin!=='default') {
-                this.particles.push({x:this.dog.x+(Math.random()-0.5)*100, y:this.dog.y+(Math.random()-0.5)*100, t:'✨', vx:0, vy:-1, life:1});
-            }
             for(let i=this.particles.length-1; i>=0; i--) {
                 let p = this.particles[i];
                 p.x+=p.vx; p.y+=p.vy; p.life-=0.02;
                 ctx.globalAlpha=p.life;
-                if(p.t==='✨') { ctx.fillStyle='gold'; ctx.fillText('✦',p.x,p.y); }
-                else { ctx.font='24px Arial'; ctx.fillText(p.t,p.x,p.y); }
+                ctx.font='20px Arial'; ctx.fillText(p.t,p.x,p.y);
                 ctx.globalAlpha=1;
                 if(p.life<=0) this.particles.splice(i,1);
             }
@@ -666,9 +563,9 @@
                     if(Game.cash >= 50) {
                         Game.cash-=50;
                         Game.needs.food = Math.min(100, Game.needs.food+30);
-                        Game.dog.scaleY=0.8; AudioSys.sfx('coin');
+                        Game.dog.scaleY=0.8; AudioSys.sfx('cash');
                         Game.particles.push({x:Game.dog.x,y:Game.dog.y-50,t:'😋',vx:0,vy:-2,life:1});
-                        UI.update(); SaveSys.save();
+                        UI.update();
                     } else UI.toast("Caviar costs $50");
                 }
             }
